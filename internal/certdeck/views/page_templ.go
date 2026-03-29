@@ -615,7 +615,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<p><span class=\"font-medium text-zinc-800 dark:text-zinc-300\">UniFi API key:</span> not set — optional. Set <span class=\"font-mono\">UNIFI_API_KEY</span> in <span class=\"font-mono\">.env</span> or paste here and Save.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<p><span class=\"font-medium text-zinc-800 dark:text-zinc-300\">UniFi API key:</span> not set — optional. Use the same <span class=\"font-mono\">UNIFI_HOST</span> / <span class=\"font-mono\">UNIFI_API_KEY</span> / <span class=\"font-mono\">UNIFI_SITE</span> as <strong class=\"text-zinc-800 dark:text-zinc-300\">unifi-smash-deck</strong>: this app auto-loads <span class=\"font-mono\">../unifi-smash-deck/.env</span> (or <span class=\"font-mono\">$GOPROJECTS/unifi-smash-deck/.env</span>), then this project’s <span class=\"font-mono\">.env</span>.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

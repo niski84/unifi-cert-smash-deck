@@ -31,7 +31,7 @@ cp .env.example .env   # optional PORT / env overrides (e.g. CLOUDFLARE_DNS_API_
 ./scripts/reload.sh
 ```
 
-The binary loads `.env` from the **current working directory** and from the **directory containing the executable**, so `CLOUDFLARE_DNS_API_TOKEN` applies even when you do not use `reload.sh`. The Settings page shows whether a token was loaded (masked) and whether the env var is set.
+The binary loads `.env` from the **current working directory** and from the **directory containing the executable**, so `CLOUDFLARE_DNS_API_TOKEN` applies even when you do not use `reload.sh`. It also loads **`../unifi-smash-deck/.env`** (and **`$GOPROJECTS/unifi-smash-deck/.env`**) **before** this app’s `.env`, so **`UNIFI_HOST`**, **`UNIFI_API_KEY`**, and **`UNIFI_SITE`** match UniFi Smash Deck without duplicating secrets. The Settings page shows Cloudflare / UniFi credential status (masked).
 
 Open `http://127.0.0.1:8105/` (or your `PORT`). Expand **First-time setup checklist** on the dashboard for step-by-step links (Cloudflare API tokens, Let’s Encrypt notes, UniFi SSH). Then fill **Settings** (domain, ACME email, Cloudflare DNS token, SSH target, paths).
 

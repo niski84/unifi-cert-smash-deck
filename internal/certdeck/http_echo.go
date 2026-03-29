@@ -46,11 +46,12 @@ func NewEcho(svc *Service) (*echo.Echo, error) {
 	e.GET("/api/health", func(c echo.Context) error {
 		cfg := svc.SnapshotConfig()
 		return c.JSON(http.StatusOK, map[string]any{
-			"service":                    "unifi-cert-smash-deck",
-			"data_dir":                   DataDir(),
+			"service":                     "unifi-cert-smash-deck",
+			"data_dir":                    DataDir(),
 			"cloudflare_dns_token_loaded": strings.TrimSpace(cfg.CloudflareAPIToken) != "",
-			"domain_configured":          strings.TrimSpace(cfg.Domain) != "",
-			"ssh_host_configured":        strings.TrimSpace(cfg.SSHHost) != "",
+			"domain_configured":           strings.TrimSpace(cfg.Domain) != "",
+			"ssh_host_configured":         strings.TrimSpace(cfg.SSHHost) != "",
+			"unifi_api_key_loaded":        strings.TrimSpace(cfg.UniFiAPIKey) != "",
 		})
 	})
 

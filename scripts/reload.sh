@@ -36,8 +36,10 @@ echo "  Build OK: $BINARY"
 
 PORT="${PORT:-8105}"
 export PORT
-echo "→ Starting on :${PORT}..."
-nohup env PORT="$PORT" "$BINARY" >"$PROJECT_DIR/unifi-cert-smash-deck.log" 2>&1 &
+GOPROJECTS="${GOPROJECTS:-$(dirname "$PROJECT_DIR")}"
+export GOPROJECTS
+echo "→ Starting on :${PORT}  GOPROJECTS=${GOPROJECTS}..."
+nohup env PORT="$PORT" GOPROJECTS="$GOPROJECTS" "$BINARY" >"$PROJECT_DIR/unifi-cert-smash-deck.log" 2>&1 &
 echo $! >"$PROJECT_DIR/unifi-cert-smash-deck.pid"
 
 for i in $(seq 1 30); do

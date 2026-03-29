@@ -38,6 +38,9 @@ func main() {
 	} else {
 		log.Printf("[unificert] cloudflare dns : no token — set CLOUDFLARE_DNS_API_TOKEN in .env or Settings")
 	}
+	if cfg.UniFiAPIKey != "" {
+		log.Printf("[unificert] unifi api key  : loaded (optional client-count log; from unifi-smash-deck .env and/or this app)")
+	}
 
 	e, err := certdeck.NewEcho(svc)
 	if err != nil {
@@ -81,14 +84,49 @@ func effectivePort(p int) int {
 	return p
 }
 
-// loadDotEnv loads .env from the current working directory (and the binary’s directory) so
-// CLOUDFLARE_DNS_API_TOKEN etc. apply even when the process is not started via scripts/reload.sh.
+// loadDotEnv loads env files in order; later files override earlier ones.
+// UNIFI_HOST / UNIFI_API_KEY / UNIFI_SITE are taken from unifi-smash-deck/.env when present
+// (sibling repo under GOPROJECTS or ../unifi-smash-deck), then this app’s .env overrides.
 func loadDotEnv() {
-	exe, err := os.Executable()
-	if err == nil {
-		exeDir := filepath.Dir(exe)
-		_ = godotenv.Load(filepath.Join(exeDir, ".env"))
+	try := func(path string) {
+		path = filepath.Clean(path)
+		if _, err := os.Stat(path); err != nil {
+			return
+		}
+		_ = godotenv.Load(path)
 	}
-	// CWD .env overrides exe directory (typical when developing in the repo).
-	_ = godotenv.Load(".env")
+
+	seen := make(map[string]bool)
+	var ordered []string
+	add := func(p string) {
+		p = filepath.Clean(p)
+		if seen[p] {
+			return
+		}
+		seen[p] = true
+		ordered = append(ordered, p)
+	}
+
+	if gp := os.Getenv("GOPROJECTS"); gp != "" {
+		add(filepath.Join(gp, "unifi-smash-deck", ".env"))
+	}
+	var exeDir, cwd string
+	if exe, err := os.Executable(); err == nil {
+		exeDir = filepath.Dir(exe)
+		add(filepath.Join(exeDir, "..", "unifi-smash-deck", ".env"))
+	}
+	if d, err := os.Getwd(); err == nil {
+		cwd = d
+		add(filepath.Join(cwd, "..", "unifi-smash-deck", ".env"))
+	}
+	if exeDir != "" {
+		add(filepath.Join(exeDir, ".env"))
+	}
+	if cwd != "" {
+		add(filepath.Join(cwd, ".env"))
+	}
+
+	for _, p := range ordered {
+		try(p)
+	}
 }
