@@ -1,0 +1,11 @@
+{
+  "name": "unifi-cert-smash-deck",
+  "private": true,
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.14",
+    "tailwindcss": "^4.0.14"
+  },
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./web/styles/input.css -o ./web/certdeck/static/app.css --minify"
+  }
+}

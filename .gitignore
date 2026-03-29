@@ -1,0 +1,14 @@
+# Build output
+unifi-cert-smash-deck
+unifi-cert-smash-deck.log
+unifi-cert-smash-deck.pid
+
+# Runtime data
+data/*.json
+data/*.log
+
+# Local env
+.env
+
+# Node (Tailwind CLI)
+node_modules/

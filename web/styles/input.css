@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Scan Templ + Go for class names */
+@source "../../internal/certdeck/views/**/*.templ";
+@source "../../internal/certdeck/**/*.go";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
