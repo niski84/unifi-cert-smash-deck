@@ -42,3 +42,5 @@ Open `http://127.0.0.1:8105/` (or your `PORT`). Configure domain, ACME email, Cl
 
 - SSH user with permission to write the remote cert paths and restart `unifi-core` (often `root`).
 - Cloudflare API token with DNS edit rights for the zone containing `_acme-challenge` records.
+
+Changing **check interval (hours)** in Settings applies after you restart the process (e.g. run `./scripts/reload.sh` again).
