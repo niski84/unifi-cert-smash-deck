@@ -234,10 +234,19 @@ templ SetupGuide() {
 						→ <strong class="text-zinc-800 dark:text-zinc-200">Account home</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Domains</strong>. Create a DNS name you’ll use for UniFi (e.g. <span class="font-mono text-zinc-800 dark:text-zinc-200">unifi.yourdomain.com</span>) as an <strong class="text-zinc-800 dark:text-zinc-200">A</strong> (or AAAA) record pointing to your <strong class="text-zinc-800 dark:text-zinc-200">public</strong> IP (or use split DNS if you only need it internally).
 					</li>
 					<li>
-						<strong class="text-zinc-800 dark:text-zinc-200">API token.</strong>
-						<a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline decoration-emerald-700/30 hover:decoration-emerald-700 dark:text-emerald-400 dark:decoration-emerald-400/40">My Profile → API Tokens</a>
-						→ <strong class="text-zinc-800 dark:text-zinc-200">Create Token</strong> → template <strong class="text-zinc-800 dark:text-zinc-200">Edit zone DNS</strong>, scoped to that zone. Paste the token into <strong class="text-zinc-800 dark:text-zinc-200">Settings → Cloudflare DNS API token</strong> below.
-						<a href="https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" target="_blank" rel="noopener noreferrer" class="ml-1 text-emerald-700 underline dark:text-emerald-400">Cloudflare docs: create a token</a>
+						<strong class="text-zinc-800 dark:text-zinc-200">API token (DNS only).</strong> This app sends the token as a <strong class="text-zinc-800 dark:text-zinc-200">Bearer</strong> secret — use <em>either</em> path below; paste the value into <strong class="text-zinc-800 dark:text-zinc-200">Settings → Cloudflare DNS API token</strong>.
+						<ul class="mt-2 list-disc space-y-2 pl-5">
+							<li>
+								<strong class="text-zinc-800 dark:text-zinc-200">Account API token</strong> (what you see under “durable integrations”): Dashboard → <strong class="text-zinc-800 dark:text-zinc-200">Manage Account</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Account API Tokens</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Create Token</strong>. Requires <strong class="text-zinc-800 dark:text-zinc-200">Super Administrator</strong> on the account. Grant permission to edit <strong class="text-zinc-800 dark:text-zinc-200">DNS</strong> for the <strong class="text-zinc-800 dark:text-zinc-200">zone</strong> that contains your hostname (compatibility matrix lists DNS as supported). Scope resources to that zone only.
+								<a href="https://developers.cloudflare.com/fundamentals/api/get-started/account-owned-tokens/" target="_blank" rel="noopener noreferrer" class="ml-1 text-emerald-700 underline dark:text-emerald-400">Account API tokens</a>
+							</li>
+							<li>
+								<strong class="text-zinc-800 dark:text-zinc-200">User API token</strong> (simpler for personal use):
+								<a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline dark:text-emerald-400">My Profile → API Tokens</a>
+								→ <strong class="text-zinc-800 dark:text-zinc-200">Create Token</strong> → template <strong class="text-zinc-800 dark:text-zinc-200">Edit zone DNS</strong>, scoped to your zone.
+								<a href="https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" target="_blank" rel="noopener noreferrer" class="ml-1 text-emerald-700 underline dark:text-emerald-400">User tokens</a>
+							</li>
+						</ul>
 					</li>
 					<li>
 						<strong class="text-zinc-800 dark:text-zinc-200">Let’s Encrypt.</strong> No separate signup — enter <strong class="text-zinc-800 dark:text-zinc-200">ACME email</strong> in Settings. Turn on <strong class="text-zinc-800 dark:text-zinc-200">staging</strong> while testing.
