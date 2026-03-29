@@ -130,7 +130,7 @@ templ SettingsPanel(vm SettingsVM) {
 		<h2 class="font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500">Settings</h2>
 		<p class="mt-1 text-xs text-zinc-600 dark:text-zinc-500">
 			Saved to <span class="font-mono text-zinc-700 dark:text-zinc-400">data/unificert-settings.json</span>. Leave token fields blank to keep current values.
-			Use the <strong class="font-medium text-zinc-700 dark:text-zinc-400">First-time setup checklist</strong> above for Cloudflare and SSH steps.
+			Use the <strong class="font-medium text-zinc-700 dark:text-zinc-400">First-time setup checklist</strong> above — Cloudflare + SSH steps.
 		</p>
 		<form class="mt-6 grid gap-4 md:grid-cols-2" hx-post="/api/settings" hx-target="#settings-toast" hx-swap="innerHTML">
 			<label class="block space-y-1">
@@ -231,17 +231,17 @@ templ SetupGuide() {
 					<li>
 						<strong class="text-zinc-800 dark:text-zinc-200">Domain on Cloudflare.</strong> Your zone appears under
 						<a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline decoration-emerald-700/30 hover:decoration-emerald-700 dark:text-emerald-400 dark:decoration-emerald-400/40">Cloudflare Dashboard</a>
-						→ <strong class="text-zinc-800 dark:text-zinc-200">Account home</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Domains</strong>. Create a DNS name you’ll use for UniFi (e.g. <span class="font-mono text-zinc-800 dark:text-zinc-200">unifi.yourdomain.com</span>) as an <strong class="text-zinc-800 dark:text-zinc-200">A</strong> (or AAAA) record pointing to your <strong class="text-zinc-800 dark:text-zinc-200">public</strong> IP (or use split DNS if you only need it internally).
+						→ <strong class="text-zinc-800 dark:text-zinc-200">Account home</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Domains</strong>. Create a DNS name you’ll use with UniFi (e.g. <span class="font-mono text-zinc-800 dark:text-zinc-200">unifi.yourdomain.com</span>) as an <strong class="text-zinc-800 dark:text-zinc-200">A</strong> (or AAAA) record pointing to your <strong class="text-zinc-800 dark:text-zinc-200">public</strong> IP (or split DNS when you need internal-only resolution).
 					</li>
 					<li>
 						<strong class="text-zinc-800 dark:text-zinc-200">API token (DNS only).</strong> This app sends the token as a <strong class="text-zinc-800 dark:text-zinc-200">Bearer</strong> secret — use <em>either</em> path below; paste the value into <strong class="text-zinc-800 dark:text-zinc-200">Settings → Cloudflare DNS API token</strong>.
 						<ul class="mt-2 list-disc space-y-2 pl-5">
 							<li>
-								<strong class="text-zinc-800 dark:text-zinc-200">Account API token</strong> (what you see under “durable integrations”): Dashboard → <strong class="text-zinc-800 dark:text-zinc-200">Manage Account</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Account API Tokens</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Create Token</strong>. Requires <strong class="text-zinc-800 dark:text-zinc-200">Super Administrator</strong> on the account. Grant permission to edit <strong class="text-zinc-800 dark:text-zinc-200">DNS</strong> for the <strong class="text-zinc-800 dark:text-zinc-200">zone</strong> that contains your hostname (compatibility matrix lists DNS as supported). Scope resources to that zone only.
+								<strong class="text-zinc-800 dark:text-zinc-200">Account API token</strong> (what you see under “durable integrations”): Dashboard → <strong class="text-zinc-800 dark:text-zinc-200">Manage Account</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Account API Tokens</strong> → <strong class="text-zinc-800 dark:text-zinc-200">Create Token</strong>. Requires <strong class="text-zinc-800 dark:text-zinc-200">Super Administrator</strong> on the account. Grant permission to edit <strong class="text-zinc-800 dark:text-zinc-200">DNS</strong> on the <strong class="text-zinc-800 dark:text-zinc-200">zone</strong> that contains your hostname (the compatibility matrix lists DNS as supported). Scope resources to that zone only.
 								<a href="https://developers.cloudflare.com/fundamentals/api/get-started/account-owned-tokens/" target="_blank" rel="noopener noreferrer" class="ml-1 text-emerald-700 underline dark:text-emerald-400">Account API tokens</a>
 							</li>
 							<li>
-								<strong class="text-zinc-800 dark:text-zinc-200">User API token</strong> (simpler for personal use):
+								<strong class="text-zinc-800 dark:text-zinc-200">User API token</strong> (simpler when it’s just you):
 								<a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" class="text-emerald-700 underline dark:text-emerald-400">My Profile → API Tokens</a>
 								→ <strong class="text-zinc-800 dark:text-zinc-200">Create Token</strong> → template <strong class="text-zinc-800 dark:text-zinc-200">Edit zone DNS</strong>, scoped to your zone.
 								<a href="https://developers.cloudflare.com/fundamentals/api/get-started/create-token/" target="_blank" rel="noopener noreferrer" class="ml-1 text-emerald-700 underline dark:text-emerald-400">User tokens</a>
@@ -267,7 +267,7 @@ templ SetupGuide() {
 					<li><span class="font-mono text-xs text-zinc-800 dark:text-zinc-200">Certificate domain</span> — hostname on the cert (must match DNS in Cloudflare).</li>
 					<li><span class="font-mono text-xs text-zinc-800 dark:text-zinc-200">Cloudflare DNS API token</span> — token from step 2.</li>
 					<li><span class="font-mono text-xs text-zinc-800 dark:text-zinc-200">SSH host / user / key</span> — LAN gateway and credentials from step 4.</li>
-					<li><span class="font-mono text-xs text-zinc-800 dark:text-zinc-200">UniFi host / API key</span> — optional; only for the extra “Wi‑Fi clients” log line (same idea as UniFi Smash Deck: local URL + Network API key).</li>
+					<li><span class="font-mono text-xs text-zinc-800 dark:text-zinc-200">UniFi host / API key</span> — optional; enables the extra “Wi‑Fi clients” log line (same idea as UniFi Smash Deck: local URL + Network API key).</li>
 				</ul>
 			</div>
 			<p class="text-xs text-zinc-500 dark:text-zinc-500">External links open in a new tab. Keys and tokens stay in <span class="font-mono">data/unificert-settings.json</span> on this server — never commit them.</p>
