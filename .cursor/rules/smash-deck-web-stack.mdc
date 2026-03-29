@@ -1,0 +1,42 @@
+---
+description: Smash Deck web stack — Go, Templ, HTMX, Alpine, Tailwind 4
+alwaysApply: true
+---
+
+# Smash Deck web stack (reference)
+
+Use this pattern for **Smash Deck**-style Go web apps (e.g. `*-smash-deck` under `goprojects/`).
+
+## Core stack
+
+| Layer | Choice |
+|--------|--------|
+| Language / server | **Go** — `net/http` or **Echo** (`github.com/labstack/echo/v4`) for routing, middleware, HTML/binary responses |
+| Templates | **Templ** (`github.com/a-h/templ`) — typed components, `go generate` / `templ generate` → `*_templ.go` |
+| Interactivity | **HTMX** — partial swaps, forms, `hx-*` attributes; keep behavior server-driven |
+| Small client behavior | **Alpine.js** (light) — only where HTMX is awkward (e.g. WebSocket client, ephemeral UI) |
+| CSS | **Tailwind CSS 4** — `@import "tailwindcss"`, `@source` globs over `**/*.templ` and `**/*.go`, CLI build to embedded static CSS |
+
+## Repo layout (convention)
+
+- `cmd/<app>/main.go` — entrypoint
+- `internal/<pkg>/` — domain logic, HTTP handlers, schedulers
+- `internal/<pkg>/views/*.templ` — UI (exported Templ components use **PascalCase** for cross-package use)
+- `web/<app>/static/` — built assets; `web/embed.go` with `//go:embed`
+- `scripts/compile.sh` — `templ generate`, `npm run build:css` (if applicable), `go build`
+- `scripts/reload.sh` — rebuild, restart, probe `/api/health` (or project equivalent)
+
+## HTMX + Alpine
+
+- Prefer **one HTML response per action** over ad hoc `fetch` + manual DOM updates.
+- **Self-contained HTMX fragments** that need polling should include `hx-*` on their **root** node so `outerHTML` swap does not drop triggers (see project `docs/HTMX_ALPINE.md`).
+- Document project-specific patterns in `docs/HTMX_ALPINE.md` or similar.
+
+## Theming
+
+- Support **dark and light** (or dark-first with toggle): class-based `dark` on `<html>`, Tailwind `@custom-variant dark`, persistence + head script to avoid flash. See global rule **new-webapp-dark-theme**.
+
+## Docs in repo
+
+- Optional: `docs/HTMX_ALPINE.md` for swap conventions and Alpine boundaries.
+- Reference implementation: `goprojects/unifi-cert-smash-deck`.

@@ -33,6 +33,8 @@ cp .env.example .env   # optional PORT / env overrides
 
 Open `http://127.0.0.1:8105/` (or your `PORT`). Configure domain, ACME email, Cloudflare DNS token, SSH target, and paths in **Settings**.
 
+Use the **Dark** / **Light** control in the header to switch themes; the choice is stored in the browser as `unificert-theme`.
+
 ## Security notes
 
 - Prefer **`ssh_known_hosts`** in settings instead of the default insecure host-key callback.

@@ -40,8 +40,21 @@ templ Layout(title string, content templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en" class="h-full antialiased">
 		<head>
+			<script>
+				(function () {
+					try {
+						var k = "unificert-theme";
+						var s = localStorage.getItem(k);
+						var dark = s === "light" ? false : s === "dark" ? true : true;
+						document.documentElement.classList.toggle("dark", dark);
+					} catch (e) {
+						document.documentElement.classList.add("dark");
+					}
+				})();
+			</script>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<meta name="color-scheme" content="dark light"/>
 			<title>{ title }</title>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -50,7 +63,7 @@ templ Layout(title string, content templ.Component) {
 			<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-zUf+hFV93CDpE8IKAYBtiBVYf+Fn4ykIUWbCWuM3k4KYyjWDiL1NhDqOZrTybk5" crossorigin="anonymous"></script>
 			<script defer src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js" integrity="sha384-3+OT+/8WzXu00r4VxB3sxUOZyR6ZKd4KwMaN+fB3yXmW3obs/jraqMw7o8gY408" crossorigin="anonymous"></script>
 		</head>
-		<body class="min-h-full bg-zinc-950 text-zinc-100 font-sans">
+		<body class="min-h-full bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 font-sans transition-colors duration-200">
 			@content
 		</body>
 	</html>
@@ -59,7 +72,7 @@ templ Layout(title string, content templ.Component) {
 templ StatusFragment(vm StatusVM) {
 	<div
 		id="status-panel"
-		class="rounded-2xl border border-white/10 bg-zinc-900/30 p-8"
+		class="rounded-2xl border border-zinc-200 bg-white/70 p-8 dark:border-white/10 dark:bg-zinc-900/30"
 		hx-get="/fragment/status"
 		hx-trigger="load, every 12s"
 		hx-swap="outerHTML"
@@ -71,27 +84,27 @@ templ StatusFragment(vm StatusVM) {
 			templ.KV("border-amber-400/90 shadow-[0_0_48px_rgba(251,191,36,0.35)] animate-pulse", vm.Renewing),
 			templ.KV("border-rose-500/80 shadow-[0_0_36px_rgba(244,63,94,0.3)]", !vm.Healthy && !vm.Renewing) }
 		>
-			<div class="absolute inset-6 rounded-full bg-zinc-900/90 ring-1 ring-white/5"></div>
+			<div class="absolute inset-6 rounded-full bg-zinc-200/90 ring-1 ring-zinc-400/20 dark:bg-zinc-900/90 dark:ring-white/5"></div>
 			<div class="relative z-10 px-4 text-center">
 				if !vm.DomainConfigured {
-					<p class="font-mono text-xs uppercase tracking-widest text-zinc-500">Status</p>
-					<p class="mt-2 text-sm text-zinc-400">Configure domain + SSH</p>
+					<p class="font-mono text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-500">Status</p>
+					<p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Configure domain + SSH</p>
 				} else if vm.Renewing {
 					<p class="font-mono text-xs uppercase tracking-widest text-amber-300/90">Renewing</p>
 					<p class="mt-2 text-sm text-zinc-300">ACME + install…</p>
 				} else if vm.Healthy {
 					<p class="font-mono text-xs uppercase tracking-widest text-emerald-400/90">Healthy</p>
-					<p class="mt-3 text-3xl font-semibold tabular-nums text-white">{ strconv.Itoa(vm.DaysLeft) }</p>
-					<p class="text-xs text-zinc-500">days left</p>
+					<p class="mt-3 text-3xl font-semibold tabular-nums text-zinc-900 dark:text-white">{ strconv.Itoa(vm.DaysLeft) }</p>
+					<p class="text-xs text-zinc-600 dark:text-zinc-500">days left</p>
 				} else {
 					<p class="font-mono text-xs uppercase tracking-widest text-rose-300/90">Attention</p>
-					<p class="mt-3 text-3xl font-semibold tabular-nums text-white">{ strconv.Itoa(vm.DaysLeft) }</p>
-					<p class="text-xs text-zinc-500">days left</p>
+					<p class="mt-3 text-3xl font-semibold tabular-nums text-zinc-900 dark:text-white">{ strconv.Itoa(vm.DaysLeft) }</p>
+					<p class="text-xs text-zinc-600 dark:text-zinc-500">days left</p>
 				}
 			</div>
 		</div>
-		<div class="max-w-md space-y-1 text-center text-sm text-zinc-400">
-			<p><span class="text-zinc-500">Common name</span> · <span class="font-mono text-zinc-200">{ vm.CommonName }</span></p>
+		<div class="max-w-md space-y-1 text-center text-sm text-zinc-600 dark:text-zinc-400">
+			<p><span class="text-zinc-500 dark:text-zinc-500">Common name</span> · <span class="font-mono text-zinc-800 dark:text-zinc-200">{ vm.CommonName }</span></p>
 			<p><span class="text-zinc-500">Last check</span> · { vm.LastCheckRel }</p>
 			<p><span class="text-zinc-500">Last sync</span> · { vm.LastSyncRel }</p>
 			if vm.LastError != "" {
@@ -105,93 +118,93 @@ templ StatusFragment(vm StatusVM) {
 templ SyncFeedback(ok bool, msg string) {
 	<span id="sync-feedback" class="text-sm">
 		if ok {
-			<span class="text-emerald-400">{ msg }</span>
+			<span class="text-emerald-700 dark:text-emerald-400">{ msg }</span>
 		} else {
-			<span class="text-rose-300">{ msg }</span>
+			<span class="text-rose-700 dark:text-rose-300">{ msg }</span>
 		}
 	</span>
 }
 
 templ SettingsPanel(vm SettingsVM) {
-	<section id="settings-panel" class="rounded-2xl border border-white/10 bg-zinc-900/40 p-6 backdrop-blur-sm">
-		<h2 class="font-mono text-sm uppercase tracking-widest text-zinc-500">Settings</h2>
-		<p class="mt-1 text-xs text-zinc-500">Saved to <span class="font-mono text-zinc-400">data/unificert-settings.json</span>. Leave token blank to keep the current value.</p>
+	<section id="settings-panel" class="rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/40">
+		<h2 class="font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500">Settings</h2>
+		<p class="mt-1 text-xs text-zinc-600 dark:text-zinc-500">Saved to <span class="font-mono text-zinc-700 dark:text-zinc-400">data/unificert-settings.json</span>. Leave token blank to keep the current value.</p>
 		<form class="mt-6 grid gap-4 md:grid-cols-2" hx-post="/api/settings" hx-target="#settings-toast" hx-swap="innerHTML">
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">Listen port</span>
-				<input name="port" type="text" value={ vm.Port } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">Listen port</span>
+				<input name="port" type="text" value={ vm.Port } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">Certificate domain (CN)</span>
-				<input name="domain" type="text" value={ vm.Domain } placeholder="unifi.example.com" class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">Certificate domain (CN)</span>
+				<input name="domain" type="text" value={ vm.Domain } placeholder="unifi.example.com" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1 md:col-span-2">
-				<span class="text-xs text-zinc-500">ACME email</span>
-				<input name="acme_email" type="email" value={ vm.ACMEEmail } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">ACME email</span>
+				<input name="acme_email" type="email" value={ vm.ACMEEmail } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
-			<label class="flex items-center gap-2 text-sm text-zinc-300">
-				<input name="acme_use_staging" type="checkbox" value="true" checked?={ vm.ACMEUseStaging } class="rounded border-white/20 bg-zinc-950"/>
+			<label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+				<input name="acme_use_staging" type="checkbox" value="true" checked?={ vm.ACMEUseStaging } class="rounded border-zinc-400 bg-white dark:border-white/20 dark:bg-zinc-950"/>
 				Use Let’s Encrypt staging
 			</label>
 			<label class="block space-y-1 md:col-span-2">
-				<span class="text-xs text-zinc-500">Cloudflare DNS API token</span>
-				<input name="cloudflare_api_token" type="password" value={ vm.CloudflareAPIToken } placeholder="(unchanged if empty)" autocomplete="off" class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">Cloudflare DNS API token</span>
+				<input name="cloudflare_api_token" type="password" value={ vm.CloudflareAPIToken } placeholder="(unchanged if empty)" autocomplete="off" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">SSH host</span>
-				<input name="ssh_host" type="text" value={ vm.SSHHost } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH host</span>
+				<input name="ssh_host" type="text" value={ vm.SSHHost } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">SSH port</span>
-				<input name="ssh_port" type="number" value={ strconv.Itoa(vm.SSHPort) } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH port</span>
+				<input name="ssh_port" type="number" value={ strconv.Itoa(vm.SSHPort) } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">SSH user</span>
-				<input name="ssh_user" type="text" value={ vm.SSHUser } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH user</span>
+				<input name="ssh_user" type="text" value={ vm.SSHUser } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">SSH private key path</span>
-				<input name="ssh_key_path" type="text" value={ vm.SSHKeyPath } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH private key path</span>
+				<input name="ssh_key_path" type="text" value={ vm.SSHKeyPath } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1 md:col-span-2">
-				<span class="text-xs text-zinc-500">SSH known_hosts file (recommended)</span>
-				<input name="ssh_known_hosts" type="text" value={ vm.SSHKnownHosts } placeholder="/home/you/.ssh/known_hosts" class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH known_hosts file (recommended)</span>
+				<input name="ssh_known_hosts" type="text" value={ vm.SSHKnownHosts } placeholder="/home/you/.ssh/known_hosts" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1 md:col-span-2">
-				<span class="text-xs text-zinc-500">Remote certificate path</span>
-				<input name="remote_cert_path" type="text" value={ vm.RemoteCertPath } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">Remote certificate path</span>
+				<input name="remote_cert_path" type="text" value={ vm.RemoteCertPath } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1 md:col-span-2">
-				<span class="text-xs text-zinc-500">Remote key path</span>
-				<input name="remote_key_path" type="text" value={ vm.RemoteKeyPath } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">Remote key path</span>
+				<input name="remote_key_path" type="text" value={ vm.RemoteKeyPath } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">Renew within (days)</span>
-				<input name="renew_within_days" type="number" value={ strconv.Itoa(vm.RenewWithinDays) } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">Renew within (days)</span>
+				<input name="renew_within_days" type="number" value={ strconv.Itoa(vm.RenewWithinDays) } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">Check interval (hours)</span>
-				<input name="check_interval_hours" type="number" value={ strconv.Itoa(vm.CheckIntervalHours) } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">Check interval (hours)</span>
+				<input name="check_interval_hours" type="number" value={ strconv.Itoa(vm.CheckIntervalHours) } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
-			<label class="flex items-center gap-2 text-sm text-zinc-300 md:col-span-2">
-				<input name="unifi_active_clients_poll" type="checkbox" value="true" checked?={ vm.UniFiActiveClientsPoll } class="rounded border-white/20 bg-zinc-950"/>
+			<label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 md:col-span-2">
+				<input name="unifi_active_clients_poll" type="checkbox" value="true" checked?={ vm.UniFiActiveClientsPoll } class="rounded border-zinc-400 bg-white dark:border-white/20 dark:bg-zinc-950"/>
 				Log UniFi Wi‑Fi client count when idle (optional)
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">UniFi host (optional)</span>
-				<input name="unifi_host" type="text" value={ vm.UniFiHost } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">UniFi host (optional)</span>
+				<input name="unifi_host" type="text" value={ vm.UniFiHost } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-500">UniFi site</span>
-				<input name="unifi_site" type="text" value={ vm.UniFiSite } class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">UniFi site</span>
+				<input name="unifi_site" type="text" value={ vm.UniFiSite } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1 md:col-span-2">
-				<span class="text-xs text-zinc-500">UniFi API key (optional)</span>
-				<input name="unifi_api_key" type="password" value={ vm.UniFiAPIKey } placeholder="(unchanged if empty)" autocomplete="off" class="w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none"/>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">UniFi API key (optional)</span>
+				<input name="unifi_api_key" type="password" value={ vm.UniFiAPIKey } placeholder="(unchanged if empty)" autocomplete="off" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
 				<button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/50">Save settings</button>
-				<span id="settings-toast" class="text-sm text-zinc-500"></span>
+				<span id="settings-toast" class="text-sm text-zinc-600 dark:text-zinc-500"></span>
 			</div>
 		</form>
 	</section>
@@ -205,17 +218,26 @@ templ DashboardBody(status StatusVM, settings SettingsVM) {
 	<div class="mx-auto max-w-5xl px-4 py-10">
 		<header class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 			<div>
-				<p class="font-mono text-xs uppercase tracking-[0.2em] text-emerald-500/80">Smash Deck</p>
-				<h1 class="mt-2 text-3xl font-semibold tracking-tight text-white">UniFi certificate lifecycle</h1>
-				<p class="mt-2 max-w-xl text-sm text-zinc-400">DNS-01 via Cloudflare, install over SSH, restart <span class="font-mono text-zinc-300">unifi-core</span>.</p>
+				<p class="font-mono text-xs uppercase tracking-[0.2em] text-emerald-600/90 dark:text-emerald-500/80">Smash Deck</p>
+				<h1 class="mt-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white">UniFi certificate lifecycle</h1>
+				<p class="mt-2 max-w-xl text-sm text-zinc-600 dark:text-zinc-400">DNS-01 via Cloudflare, install over SSH, restart <span class="font-mono text-zinc-700 dark:text-zinc-300">unifi-core</span>.</p>
 			</div>
 			<div class="flex flex-wrap items-center gap-3">
+				<button
+					type="button"
+					class="rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400/40 dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+					aria-label="Toggle dark and light theme"
+					onclick="(function(){var r=document.documentElement;var n=!r.classList.contains('dark');r.classList.toggle('dark',n);localStorage.setItem('unificert-theme',n?'dark':'light');})()"
+				>
+					<span class="dark:hidden">Dark</span>
+					<span class="hidden dark:inline">Light</span>
+				</button>
 				<button
 					type="button"
 					hx-post="/api/sync"
 					hx-target="#sync-feedback"
 					hx-swap="innerHTML"
-					class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-100 hover:bg-amber-500/20 focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+					class="rounded-lg border border-amber-600/50 bg-amber-500/15 px-4 py-2 text-sm font-medium text-amber-950 hover:bg-amber-500/25 focus:outline-none focus:ring-2 focus:ring-amber-500/40 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100 dark:hover:bg-amber-500/20 dark:focus:ring-amber-400/40"
 				>
 					Sync now
 				</button>
@@ -227,8 +249,8 @@ templ DashboardBody(status StatusVM, settings SettingsVM) {
 				@StatusFragment(status)
 			</div>
 			<div class="lg:col-span-3 space-y-6">
-				<section class="rounded-2xl border border-white/10 bg-zinc-900/30 p-5">
-					<h2 class="font-mono text-sm uppercase tracking-widest text-zinc-500">Log stream</h2>
+				<section class="rounded-2xl border border-zinc-200 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-900/30">
+					<h2 class="font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500">Log stream</h2>
 					<div
 						x-data="certLog()"
 						x-init="connect()"
@@ -236,7 +258,7 @@ templ DashboardBody(status StatusVM, settings SettingsVM) {
 					>
 						<pre
 							x-ref="panel"
-							class="max-h-72 overflow-y-auto rounded-xl border border-white/5 bg-black/50 p-4 font-mono text-xs leading-relaxed text-emerald-100/90 whitespace-pre-wrap"
+							class="max-h-72 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-4 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90"
 							x-text="lines.join('\n')"
 						></pre>
 					</div>

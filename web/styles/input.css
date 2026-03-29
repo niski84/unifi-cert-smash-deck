@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: `dark` on <html> (see theme init script in Layout) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Scan Templ + Go for class names */
 @source "../../internal/certdeck/views/**/*.templ";
 @source "../../internal/certdeck/**/*.go";
@@ -7,4 +10,15 @@
 @theme {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Hint scrollbars / form controls for the active theme */
+html {
+  color-scheme: light dark;
+}
+html.dark {
+  color-scheme: dark;
+}
+html:not(.dark) {
+  color-scheme: light;
 }

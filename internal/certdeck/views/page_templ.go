@@ -65,20 +65,20 @@ func Layout(title string, content templ.Component) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\" class=\"h-full antialiased\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\" class=\"h-full antialiased\"><head><script>\n\t\t\t\t(function () {\n\t\t\t\t\ttry {\n\t\t\t\t\t\tvar k = \"unificert-theme\";\n\t\t\t\t\t\tvar s = localStorage.getItem(k);\n\t\t\t\t\t\tvar dark = s === \"light\" ? false : s === \"dark\" ? true : true;\n\t\t\t\t\t\tdocument.documentElement.classList.toggle(\"dark\", dark);\n\t\t\t\t\t} catch (e) {\n\t\t\t\t\t\tdocument.documentElement.classList.add(\"dark\");\n\t\t\t\t\t}\n\t\t\t\t})();\n\t\t\t</script><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"dark light\"><title>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 45, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 58, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/app.css\"><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-zUf+hFV93CDpE8IKAYBtiBVYf+Fn4ykIUWbCWuM3k4KYyjWDiL1NhDqOZrTybk5\" crossorigin=\"anonymous\"></script><script defer src=\"https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js\" integrity=\"sha384-3+OT+/8WzXu00r4VxB3sxUOZyR6ZKd4KwMaN+fB3yXmW3obs/jraqMw7o8gY408\" crossorigin=\"anonymous\"></script></head><body class=\"min-h-full bg-zinc-950 text-zinc-100 font-sans\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap\" rel=\"stylesheet\"><link rel=\"stylesheet\" href=\"/static/app.css\"><script src=\"https://unpkg.com/htmx.org@2.0.4\" integrity=\"sha384-zUf+hFV93CDpE8IKAYBtiBVYf+Fn4ykIUWbCWuM3k4KYyjWDiL1NhDqOZrTybk5\" crossorigin=\"anonymous\"></script><script defer src=\"https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js\" integrity=\"sha384-3+OT+/8WzXu00r4VxB3sxUOZyR6ZKd4KwMaN+fB3yXmW3obs/jraqMw7o8gY408\" crossorigin=\"anonymous\"></script></head><body class=\"min-h-full bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 font-sans transition-colors duration-200\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -115,7 +115,7 @@ func StatusFragment(vm StatusVM) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"status-panel\" class=\"rounded-2xl border border-white/10 bg-zinc-900/30 p-8\" hx-get=\"/fragment/status\" hx-trigger=\"load, every 12s\" hx-swap=\"outerHTML\"><div id=\"status-root\" class=\"flex flex-col items-center gap-6\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div id=\"status-panel\" class=\"rounded-2xl border border-zinc-200 bg-white/70 p-8 dark:border-white/10 dark:bg-zinc-900/30\" hx-get=\"/fragment/status\" hx-trigger=\"load, every 12s\" hx-swap=\"outerHTML\"><div id=\"status-root\" class=\"flex flex-col items-center gap-6\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -140,12 +140,12 @@ func StatusFragment(vm StatusVM) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><div class=\"absolute inset-6 rounded-full bg-zinc-900/90 ring-1 ring-white/5\"></div><div class=\"relative z-10 px-4 text-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><div class=\"absolute inset-6 rounded-full bg-zinc-200/90 ring-1 ring-zinc-400/20 dark:bg-zinc-900/90 dark:ring-white/5\"></div><div class=\"relative z-10 px-4 text-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if !vm.DomainConfigured {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<p class=\"font-mono text-xs uppercase tracking-widest text-zinc-500\">Status</p><p class=\"mt-2 text-sm text-zinc-400\">Configure domain + SSH</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<p class=\"font-mono text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-500\">Status</p><p class=\"mt-2 text-sm text-zinc-600 dark:text-zinc-400\">Configure domain + SSH</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -155,50 +155,50 @@ func StatusFragment(vm StatusVM) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else if vm.Healthy {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p class=\"font-mono text-xs uppercase tracking-widest text-emerald-400/90\">Healthy</p><p class=\"mt-3 text-3xl font-semibold tabular-nums text-white\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p class=\"font-mono text-xs uppercase tracking-widest text-emerald-400/90\">Healthy</p><p class=\"mt-3 text-3xl font-semibold tabular-nums text-zinc-900 dark:text-white\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.DaysLeft))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 84, Col: 95}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 97, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</p><p class=\"text-xs text-zinc-500\">days left</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</p><p class=\"text-xs text-zinc-600 dark:text-zinc-500\">days left</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<p class=\"font-mono text-xs uppercase tracking-widest text-rose-300/90\">Attention</p><p class=\"mt-3 text-3xl font-semibold tabular-nums text-white\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<p class=\"font-mono text-xs uppercase tracking-widest text-rose-300/90\">Attention</p><p class=\"mt-3 text-3xl font-semibold tabular-nums text-zinc-900 dark:text-white\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.DaysLeft))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 88, Col: 95}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 101, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</p><p class=\"text-xs text-zinc-500\">days left</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</p><p class=\"text-xs text-zinc-600 dark:text-zinc-500\">days left</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><div class=\"max-w-md space-y-1 text-center text-sm text-zinc-400\"><p><span class=\"text-zinc-500\">Common name</span> · <span class=\"font-mono text-zinc-200\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><div class=\"max-w-md space-y-1 text-center text-sm text-zinc-600 dark:text-zinc-400\"><p><span class=\"text-zinc-500 dark:text-zinc-500\">Common name</span> · <span class=\"font-mono text-zinc-800 dark:text-zinc-200\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(vm.CommonName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 94, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 107, Col: 147}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -211,7 +211,7 @@ func StatusFragment(vm StatusVM) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(vm.LastCheckRel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 95, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 108, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -224,7 +224,7 @@ func StatusFragment(vm StatusVM) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(vm.LastSyncRel)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 96, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 109, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -242,7 +242,7 @@ func StatusFragment(vm StatusVM) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(vm.LastError)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 98, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 111, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -287,14 +287,14 @@ func SyncFeedback(ok bool, msg string) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if ok {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"text-emerald-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"text-emerald-700 dark:text-emerald-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 108, Col: 39}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 121, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -305,14 +305,14 @@ func SyncFeedback(ok bool, msg string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<span class=\"text-rose-300\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<span class=\"text-rose-700 dark:text-rose-300\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 110, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 123, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -352,46 +352,46 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<section id=\"settings-panel\" class=\"rounded-2xl border border-white/10 bg-zinc-900/40 p-6 backdrop-blur-sm\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-500\">Settings</h2><p class=\"mt-1 text-xs text-zinc-500\">Saved to <span class=\"font-mono text-zinc-400\">data/unificert-settings.json</span>. Leave token blank to keep the current value.</p><form class=\"mt-6 grid gap-4 md:grid-cols-2\" hx-post=\"/api/settings\" hx-target=\"#settings-toast\" hx-swap=\"innerHTML\"><label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">Listen port</span> <input name=\"port\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<section id=\"settings-panel\" class=\"rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/40\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500\">Settings</h2><p class=\"mt-1 text-xs text-zinc-600 dark:text-zinc-500\">Saved to <span class=\"font-mono text-zinc-700 dark:text-zinc-400\">data/unificert-settings.json</span>. Leave token blank to keep the current value.</p><form class=\"mt-6 grid gap-4 md:grid-cols-2\" hx-post=\"/api/settings\" hx-target=\"#settings-toast\" hx-swap=\"innerHTML\"><label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Listen port</span> <input name=\"port\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(vm.Port)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 122, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 135, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">Certificate domain (CN)</span> <input name=\"domain\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Certificate domain (CN)</span> <input name=\"domain\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(vm.Domain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 126, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 139, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" placeholder=\"unifi.example.com\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-500\">ACME email</span> <input name=\"acme_email\" type=\"email\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" placeholder=\"unifi.example.com\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">ACME email</span> <input name=\"acme_email\" type=\"email\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(vm.ACMEEmail)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 130, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 143, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"flex items-center gap-2 text-sm text-zinc-300\"><input name=\"acme_use_staging\" type=\"checkbox\" value=\"true\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300\"><input name=\"acme_use_staging\" type=\"checkbox\" value=\"true\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -401,137 +401,137 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " class=\"rounded border-white/20 bg-zinc-950\"> Use Let’s Encrypt staging</label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-500\">Cloudflare DNS API token</span> <input name=\"cloudflare_api_token\" type=\"password\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " class=\"rounded border-zinc-400 bg-white dark:border-white/20 dark:bg-zinc-950\"> Use Let’s Encrypt staging</label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Cloudflare DNS API token</span> <input name=\"cloudflare_api_token\" type=\"password\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(vm.CloudflareAPIToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 138, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 151, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" placeholder=\"(unchanged if empty)\" autocomplete=\"off\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">SSH host</span> <input name=\"ssh_host\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" placeholder=\"(unchanged if empty)\" autocomplete=\"off\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">SSH host</span> <input name=\"ssh_host\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHHost)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 142, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 155, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">SSH port</span> <input name=\"ssh_port\" type=\"number\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">SSH port</span> <input name=\"ssh_port\" type=\"number\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.SSHPort))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 146, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 159, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">SSH user</span> <input name=\"ssh_user\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">SSH user</span> <input name=\"ssh_user\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHUser)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 150, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 163, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">SSH private key path</span> <input name=\"ssh_key_path\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">SSH private key path</span> <input name=\"ssh_key_path\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHKeyPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 154, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 167, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-500\">SSH known_hosts file (recommended)</span> <input name=\"ssh_known_hosts\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">SSH known_hosts file (recommended)</span> <input name=\"ssh_known_hosts\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHKnownHosts)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 158, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 171, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\" placeholder=\"/home/you/.ssh/known_hosts\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-500\">Remote certificate path</span> <input name=\"remote_cert_path\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\" placeholder=\"/home/you/.ssh/known_hosts\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Remote certificate path</span> <input name=\"remote_cert_path\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(vm.RemoteCertPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 162, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 175, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-500\">Remote key path</span> <input name=\"remote_key_path\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Remote key path</span> <input name=\"remote_key_path\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(vm.RemoteKeyPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 166, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 179, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">Renew within (days)</span> <input name=\"renew_within_days\" type=\"number\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Renew within (days)</span> <input name=\"renew_within_days\" type=\"number\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.RenewWithinDays))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 170, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 183, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">Check interval (hours)</span> <input name=\"check_interval_hours\" type=\"number\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Check interval (hours)</span> <input name=\"check_interval_hours\" type=\"number\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.CheckIntervalHours))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 174, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 187, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"flex items-center gap-2 text-sm text-zinc-300 md:col-span-2\"><input name=\"unifi_active_clients_poll\" type=\"checkbox\" value=\"true\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 md:col-span-2\"><input name=\"unifi_active_clients_poll\" type=\"checkbox\" value=\"true\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -541,46 +541,46 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, " class=\"rounded border-white/20 bg-zinc-950\"> Log UniFi Wi‑Fi client count when idle (optional)</label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">UniFi host (optional)</span> <input name=\"unifi_host\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, " class=\"rounded border-zinc-400 bg-white dark:border-white/20 dark:bg-zinc-950\"> Log UniFi Wi‑Fi client count when idle (optional)</label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">UniFi host (optional)</span> <input name=\"unifi_host\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(vm.UniFiHost)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 182, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 195, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-500\">UniFi site</span> <input name=\"unifi_site\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">UniFi site</span> <input name=\"unifi_site\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(vm.UniFiSite)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 186, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 199, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-500\">UniFi API key (optional)</span> <input name=\"unifi_api_key\" type=\"password\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label> <label class=\"block space-y-1 md:col-span-2\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">UniFi API key (optional)</span> <input name=\"unifi_api_key\" type=\"password\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(vm.UniFiAPIKey)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 190, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 203, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" placeholder=\"(unchanged if empty)\" autocomplete=\"off\" class=\"w-full rounded-lg border border-white/10 bg-zinc-950 px-3 py-2 font-mono text-sm text-white focus:border-emerald-500/50 focus:outline-none\"></label><div class=\"md:col-span-2 flex flex-wrap items-center gap-3 pt-2\"><button type=\"submit\" class=\"rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/50\">Save settings</button> <span id=\"settings-toast\" class=\"text-sm text-zinc-500\"></span></div></form></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" placeholder=\"(unchanged if empty)\" autocomplete=\"off\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label><div class=\"md:col-span-2 flex flex-wrap items-center gap-3 pt-2\"><button type=\"submit\" class=\"rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/50\">Save settings</button> <span id=\"settings-toast\" class=\"text-sm text-zinc-600 dark:text-zinc-500\"></span></div></form></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -638,7 +638,7 @@ func DashboardBody(status StatusVM, settings SettingsVM) templ.Component {
 			templ_7745c5c3_Var33 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div class=\"mx-auto max-w-5xl px-4 py-10\"><header class=\"mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between\"><div><p class=\"font-mono text-xs uppercase tracking-[0.2em] text-emerald-500/80\">Smash Deck</p><h1 class=\"mt-2 text-3xl font-semibold tracking-tight text-white\">UniFi certificate lifecycle</h1><p class=\"mt-2 max-w-xl text-sm text-zinc-400\">DNS-01 via Cloudflare, install over SSH, restart <span class=\"font-mono text-zinc-300\">unifi-core</span>.</p></div><div class=\"flex flex-wrap items-center gap-3\"><button type=\"button\" hx-post=\"/api/sync\" hx-target=\"#sync-feedback\" hx-swap=\"innerHTML\" class=\"rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-100 hover:bg-amber-500/20 focus:outline-none focus:ring-2 focus:ring-amber-400/40\">Sync now</button>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div class=\"mx-auto max-w-5xl px-4 py-10\"><header class=\"mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between\"><div><p class=\"font-mono text-xs uppercase tracking-[0.2em] text-emerald-600/90 dark:text-emerald-500/80\">Smash Deck</p><h1 class=\"mt-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white\">UniFi certificate lifecycle</h1><p class=\"mt-2 max-w-xl text-sm text-zinc-600 dark:text-zinc-400\">DNS-01 via Cloudflare, install over SSH, restart <span class=\"font-mono text-zinc-700 dark:text-zinc-300\">unifi-core</span>.</p></div><div class=\"flex flex-wrap items-center gap-3\"><button type=\"button\" class=\"rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400/40 dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800\" aria-label=\"Toggle dark and light theme\" onclick=\"(function(){var r=document.documentElement;var n=!r.classList.contains('dark');r.classList.toggle('dark',n);localStorage.setItem('unificert-theme',n?'dark':'light');})()\"><span class=\"dark:hidden\">Dark</span> <span class=\"hidden dark:inline\">Light</span></button> <button type=\"button\" hx-post=\"/api/sync\" hx-target=\"#sync-feedback\" hx-swap=\"innerHTML\" class=\"rounded-lg border border-amber-600/50 bg-amber-500/15 px-4 py-2 text-sm font-medium text-amber-950 hover:bg-amber-500/25 focus:outline-none focus:ring-2 focus:ring-amber-500/40 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100 dark:hover:bg-amber-500/20 dark:focus:ring-amber-400/40\">Sync now</button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -654,7 +654,7 @@ func DashboardBody(status StatusVM, settings SettingsVM) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"lg:col-span-3 space-y-6\"><section class=\"rounded-2xl border border-white/10 bg-zinc-900/30 p-5\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-500\">Log stream</h2><div x-data=\"certLog()\" x-init=\"connect()\" class=\"mt-4\"><pre x-ref=\"panel\" class=\"max-h-72 overflow-y-auto rounded-xl border border-white/5 bg-black/50 p-4 font-mono text-xs leading-relaxed text-emerald-100/90 whitespace-pre-wrap\" x-text=\"lines.join('\\n')\"></pre></div><script>\n\t\t\t\t\t\tfunction certLog() {\n\t\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\t\tlines: [],\n\t\t\t\t\t\t\t\tconnect() {\n\t\t\t\t\t\t\t\t\tconst proto = location.protocol === \"https:\" ? \"wss\" : \"ws\";\n\t\t\t\t\t\t\t\t\tconst ws = new WebSocket(proto + \"://\" + location.host + \"/ws/log\");\n\t\t\t\t\t\t\t\t\tws.onmessage = (ev) => {\n\t\t\t\t\t\t\t\t\t\tthis.lines.push(ev.data);\n\t\t\t\t\t\t\t\t\t\tif (this.lines.length > 500) this.lines = this.lines.slice(-500);\n\t\t\t\t\t\t\t\t\t};\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t};\n\t\t\t\t\t\t}\n\t\t\t\t\t</script></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"lg:col-span-3 space-y-6\"><section class=\"rounded-2xl border border-zinc-200 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-900/30\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500\">Log stream</h2><div x-data=\"certLog()\" x-init=\"connect()\" class=\"mt-4\"><pre x-ref=\"panel\" class=\"max-h-72 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-4 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90\" x-text=\"lines.join('\\n')\"></pre></div><script>\n\t\t\t\t\t\tfunction certLog() {\n\t\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\t\tlines: [],\n\t\t\t\t\t\t\t\tconnect() {\n\t\t\t\t\t\t\t\t\tconst proto = location.protocol === \"https:\" ? \"wss\" : \"ws\";\n\t\t\t\t\t\t\t\t\tconst ws = new WebSocket(proto + \"://\" + location.host + \"/ws/log\");\n\t\t\t\t\t\t\t\t\tws.onmessage = (ev) => {\n\t\t\t\t\t\t\t\t\t\tthis.lines.push(ev.data);\n\t\t\t\t\t\t\t\t\t\tif (this.lines.length > 500) this.lines = this.lines.slice(-500);\n\t\t\t\t\t\t\t\t\t};\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t};\n\t\t\t\t\t\t}\n\t\t\t\t\t</script></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
