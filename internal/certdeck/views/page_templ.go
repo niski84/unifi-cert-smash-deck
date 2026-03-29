@@ -352,14 +352,14 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<section id=\"settings-panel\" class=\"rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/40\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500\">Settings</h2><p class=\"mt-1 text-xs text-zinc-600 dark:text-zinc-500\">Saved to <span class=\"font-mono text-zinc-700 dark:text-zinc-400\">data/unificert-settings.json</span>. Leave token blank to keep the current value.</p><form class=\"mt-6 grid gap-4 md:grid-cols-2\" hx-post=\"/api/settings\" hx-target=\"#settings-toast\" hx-swap=\"innerHTML\"><label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Listen port</span> <input name=\"port\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<section id=\"settings-panel\" class=\"rounded-2xl border border-zinc-200 bg-white/80 p-6 backdrop-blur-sm dark:border-white/10 dark:bg-zinc-900/40\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500\">Settings</h2><p class=\"mt-1 text-xs text-zinc-600 dark:text-zinc-500\">Saved to <span class=\"font-mono text-zinc-700 dark:text-zinc-400\">data/unificert-settings.json</span>. Leave token fields blank to keep current values. Use the <strong class=\"font-medium text-zinc-700 dark:text-zinc-400\">First-time setup checklist</strong> above for Cloudflare and SSH steps.</p><form class=\"mt-6 grid gap-4 md:grid-cols-2\" hx-post=\"/api/settings\" hx-target=\"#settings-toast\" hx-swap=\"innerHTML\"><label class=\"block space-y-1\"><span class=\"text-xs text-zinc-600 dark:text-zinc-500\">Listen port</span> <input name=\"port\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(vm.Port)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 135, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 138, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -372,7 +372,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(vm.Domain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 139, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 142, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -385,7 +385,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(vm.ACMEEmail)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 143, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 146, Col: 62}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -408,7 +408,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(vm.CloudflareAPIToken)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 151, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 154, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -421,7 +421,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHHost)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 155, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 158, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -434,7 +434,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.SSHPort))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 159, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 162, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
@@ -447,7 +447,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHUser)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 163, Col: 57}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 166, Col: 57}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -460,7 +460,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHKeyPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 167, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 170, Col: 64}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -473,7 +473,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(vm.SSHKnownHosts)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 171, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 174, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -486,7 +486,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(vm.RemoteCertPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 175, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 178, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
@@ -499,7 +499,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(vm.RemoteKeyPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 179, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 182, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -512,7 +512,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.RenewWithinDays))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 183, Col: 90}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 186, Col: 90}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -525,7 +525,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(vm.CheckIntervalHours))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 187, Col: 96}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 190, Col: 96}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -548,7 +548,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var29 string
 		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(vm.UniFiHost)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 195, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 198, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
@@ -561,7 +561,7 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var30 string
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(vm.UniFiSite)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 199, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 202, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -574,13 +574,42 @@ func SettingsPanel(vm SettingsVM) templ.Component {
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(vm.UniFiAPIKey)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 203, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `page.templ`, Line: 206, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" placeholder=\"(unchanged if empty)\" autocomplete=\"off\" class=\"w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50\"></label><div class=\"md:col-span-2 flex flex-wrap items-center gap-3 pt-2\"><button type=\"submit\" class=\"rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/50\">Save settings</button> <span id=\"settings-toast\" class=\"text-sm text-zinc-600 dark:text-zinc-500\"></span></div></form></section>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func SetupGuide() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var32 == nil {
+			templ_7745c5c3_Var32 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<details open class=\"group mb-10 rounded-2xl border border-zinc-200 bg-white/80 p-5 dark:border-emerald-500/20 dark:bg-zinc-900/50\"><summary class=\"cursor-pointer list-none font-mono text-sm uppercase tracking-widest text-emerald-700 dark:text-emerald-400/90 [&::-webkit-details-marker]:hidden\"><span class=\"inline-flex items-center gap-2\"><span class=\"text-zinc-400 transition-transform group-open:rotate-90 dark:text-zinc-500\">▸</span> First-time setup checklist</span></summary><div class=\"mt-4 space-y-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300\"><p>This app renews the <strong class=\"text-zinc-900 dark:text-zinc-100\">TLS certificate on your UniFi gateway</strong> using Let’s Encrypt <strong class=\"text-zinc-900 dark:text-zinc-100\">DNS-01</strong> (Cloudflare creates a temporary TXT record). You need SSH to the gateway to install files and restart <span class=\"font-mono text-zinc-800 dark:text-zinc-200\">unifi-core</span>.</p><div><p class=\"mb-2 font-medium text-zinc-900 dark:text-zinc-100\">Short path</p><ol class=\"list-decimal space-y-2 pl-5 text-zinc-600 dark:text-zinc-400\"><li><strong class=\"text-zinc-800 dark:text-zinc-200\">Domain on Cloudflare.</strong> Your zone appears under <a href=\"https://dash.cloudflare.com/\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-emerald-700 underline decoration-emerald-700/30 hover:decoration-emerald-700 dark:text-emerald-400 dark:decoration-emerald-400/40\">Cloudflare Dashboard</a> → <strong class=\"text-zinc-800 dark:text-zinc-200\">Account home</strong> → <strong class=\"text-zinc-800 dark:text-zinc-200\">Domains</strong>. Create a DNS name you’ll use for UniFi (e.g. <span class=\"font-mono text-zinc-800 dark:text-zinc-200\">unifi.yourdomain.com</span>) as an <strong class=\"text-zinc-800 dark:text-zinc-200\">A</strong> (or AAAA) record pointing to your <strong class=\"text-zinc-800 dark:text-zinc-200\">public</strong> IP (or use split DNS if you only need it internally).</li><li><strong class=\"text-zinc-800 dark:text-zinc-200\">API token.</strong> <a href=\"https://dash.cloudflare.com/profile/api-tokens\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-emerald-700 underline decoration-emerald-700/30 hover:decoration-emerald-700 dark:text-emerald-400 dark:decoration-emerald-400/40\">My Profile → API Tokens</a> → <strong class=\"text-zinc-800 dark:text-zinc-200\">Create Token</strong> → template <strong class=\"text-zinc-800 dark:text-zinc-200\">Edit zone DNS</strong>, scoped to that zone. Paste the token into <strong class=\"text-zinc-800 dark:text-zinc-200\">Settings → Cloudflare DNS API token</strong> below. <a href=\"https://developers.cloudflare.com/fundamentals/api/get-started/create-token/\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"ml-1 text-emerald-700 underline dark:text-emerald-400\">Cloudflare docs: create a token</a></li><li><strong class=\"text-zinc-800 dark:text-zinc-200\">Let’s Encrypt.</strong> No separate signup — enter <strong class=\"text-zinc-800 dark:text-zinc-200\">ACME email</strong> in Settings. Turn on <strong class=\"text-zinc-800 dark:text-zinc-200\">staging</strong> while testing. <a href=\"https://letsencrypt.org/docs/faq/\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"ml-1 text-emerald-700 underline dark:text-emerald-400\">Let’s Encrypt FAQ</a></li><li><strong class=\"text-zinc-800 dark:text-zinc-200\">SSH on UniFi.</strong> In the UniFi web UI (<strong class=\"text-zinc-800 dark:text-zinc-200\">Settings</strong> / system / console — exact labels vary by device), enable <strong class=\"text-zinc-800 dark:text-zinc-200\">SSH</strong>. Use the same IP you use in the browser (e.g. <span class=\"font-mono text-zinc-800 dark:text-zinc-200\">192.168.x.x</span>) as <strong class=\"text-zinc-800 dark:text-zinc-200\">SSH host</strong>; user is often <span class=\"font-mono\">root</span> with your key path on <em>this</em> machine. <a href=\"https://help.ui.com/hc/en-us/articles/115005159588-UniFi-Using-SSH-to-connect-to-your-device\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"ml-1 text-emerald-700 underline dark:text-emerald-400\">Ubiquiti: SSH to UniFi</a></li><li><strong class=\"text-zinc-800 dark:text-zinc-200\">Save</strong> Settings, then <strong class=\"text-zinc-800 dark:text-zinc-200\">Sync now</strong> and watch the log stream.</li></ol></div><div><p class=\"mb-2 font-medium text-zinc-900 dark:text-zinc-100\">Where each value goes</p><ul class=\"space-y-1.5 border-l-2 border-emerald-500/40 pl-4 text-zinc-600 dark:text-zinc-400\"><li><span class=\"font-mono text-xs text-zinc-800 dark:text-zinc-200\">Certificate domain</span> — hostname on the cert (must match DNS in Cloudflare).</li><li><span class=\"font-mono text-xs text-zinc-800 dark:text-zinc-200\">Cloudflare DNS API token</span> — token from step 2.</li><li><span class=\"font-mono text-xs text-zinc-800 dark:text-zinc-200\">SSH host / user / key</span> — LAN gateway and credentials from step 4.</li><li><span class=\"font-mono text-xs text-zinc-800 dark:text-zinc-200\">UniFi host / API key</span> — optional; only for the extra “Wi‑Fi clients” log line (same idea as UniFi Smash Deck: local URL + Network API key).</li></ul></div><p class=\"text-xs text-zinc-500 dark:text-zinc-500\">External links open in a new tab. Keys and tokens stay in <span class=\"font-mono\">data/unificert-settings.json</span> on this server — never commit them.</p></div></details>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -604,9 +633,9 @@ func DashboardPage(status StatusVM, settings SettingsVM) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var32 == nil {
-			templ_7745c5c3_Var32 = templ.NopComponent
+		templ_7745c5c3_Var33 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var33 == nil {
+			templ_7745c5c3_Var33 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = Layout("UniFi Cert Smash Deck", DashboardBody(status, settings)).Render(ctx, templ_7745c5c3_Buffer)
@@ -633,12 +662,12 @@ func DashboardBody(status StatusVM, settings SettingsVM) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var33 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var33 == nil {
-			templ_7745c5c3_Var33 = templ.NopComponent
+		templ_7745c5c3_Var34 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var34 == nil {
+			templ_7745c5c3_Var34 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div class=\"mx-auto max-w-5xl px-4 py-10\"><header class=\"mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between\"><div><p class=\"font-mono text-xs uppercase tracking-[0.2em] text-emerald-600/90 dark:text-emerald-500/80\">Smash Deck</p><h1 class=\"mt-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white\">UniFi certificate lifecycle</h1><p class=\"mt-2 max-w-xl text-sm text-zinc-600 dark:text-zinc-400\">DNS-01 via Cloudflare, install over SSH, restart <span class=\"font-mono text-zinc-700 dark:text-zinc-300\">unifi-core</span>.</p></div><div class=\"flex flex-wrap items-center gap-3\"><button type=\"button\" class=\"rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400/40 dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800\" aria-label=\"Toggle dark and light theme\" onclick=\"(function(){var r=document.documentElement;var n=!r.classList.contains('dark');r.classList.toggle('dark',n);localStorage.setItem('unificert-theme',n?'dark':'light');})()\"><span class=\"dark:hidden\">Dark</span> <span class=\"hidden dark:inline\">Light</span></button> <button type=\"button\" hx-post=\"/api/sync\" hx-target=\"#sync-feedback\" hx-swap=\"innerHTML\" class=\"rounded-lg border border-amber-600/50 bg-amber-500/15 px-4 py-2 text-sm font-medium text-amber-950 hover:bg-amber-500/25 focus:outline-none focus:ring-2 focus:ring-amber-500/40 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100 dark:hover:bg-amber-500/20 dark:focus:ring-amber-400/40\">Sync now</button>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<div class=\"mx-auto max-w-5xl px-4 py-10\"><header class=\"mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between\"><div><p class=\"font-mono text-xs uppercase tracking-[0.2em] text-emerald-600/90 dark:text-emerald-500/80\">Smash Deck</p><h1 class=\"mt-2 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white\">UniFi certificate lifecycle</h1><p class=\"mt-2 max-w-xl text-sm text-zinc-600 dark:text-zinc-400\">DNS-01 via Cloudflare, install over SSH, restart <span class=\"font-mono text-zinc-700 dark:text-zinc-300\">unifi-core</span>.</p></div><div class=\"flex flex-wrap items-center gap-3\"><button type=\"button\" class=\"rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-400/40 dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800\" aria-label=\"Toggle dark and light theme\" onclick=\"(function(){var r=document.documentElement;var n=!r.classList.contains('dark');r.classList.toggle('dark',n);localStorage.setItem('unificert-theme',n?'dark':'light');})()\"><span class=\"dark:hidden\">Dark</span> <span class=\"hidden dark:inline\">Light</span></button> <button type=\"button\" hx-post=\"/api/sync\" hx-target=\"#sync-feedback\" hx-swap=\"innerHTML\" class=\"rounded-lg border border-amber-600/50 bg-amber-500/15 px-4 py-2 text-sm font-medium text-amber-950 hover:bg-amber-500/25 focus:outline-none focus:ring-2 focus:ring-amber-500/40 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100 dark:hover:bg-amber-500/20 dark:focus:ring-amber-400/40\">Sync now</button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -646,7 +675,15 @@ func DashboardBody(status StatusVM, settings SettingsVM) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div></header><div class=\"grid gap-10 lg:grid-cols-5\"><div class=\"lg:col-span-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div></header>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = SetupGuide().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<div class=\"grid gap-10 lg:grid-cols-5\"><div class=\"lg:col-span-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -654,7 +691,7 @@ func DashboardBody(status StatusVM, settings SettingsVM) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div><div class=\"lg:col-span-3 space-y-6\"><section class=\"rounded-2xl border border-zinc-200 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-900/30\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500\">Log stream</h2><div x-data=\"certLog()\" x-init=\"connect()\" class=\"mt-4\"><pre x-ref=\"panel\" class=\"max-h-72 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-4 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90\" x-text=\"lines.join('\\n')\"></pre></div><script>\n\t\t\t\t\t\tfunction certLog() {\n\t\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\t\tlines: [],\n\t\t\t\t\t\t\t\tconnect() {\n\t\t\t\t\t\t\t\t\tconst proto = location.protocol === \"https:\" ? \"wss\" : \"ws\";\n\t\t\t\t\t\t\t\t\tconst ws = new WebSocket(proto + \"://\" + location.host + \"/ws/log\");\n\t\t\t\t\t\t\t\t\tws.onmessage = (ev) => {\n\t\t\t\t\t\t\t\t\t\tthis.lines.push(ev.data);\n\t\t\t\t\t\t\t\t\t\tif (this.lines.length > 500) this.lines = this.lines.slice(-500);\n\t\t\t\t\t\t\t\t\t};\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t};\n\t\t\t\t\t\t}\n\t\t\t\t\t</script></section>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div><div class=\"lg:col-span-3 space-y-6\"><section class=\"rounded-2xl border border-zinc-200 bg-white/70 p-5 dark:border-white/10 dark:bg-zinc-900/30\"><h2 class=\"font-mono text-sm uppercase tracking-widest text-zinc-600 dark:text-zinc-500\">Log stream</h2><div x-data=\"certLog()\" x-init=\"connect()\" class=\"mt-4\"><pre x-ref=\"panel\" class=\"max-h-72 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-4 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90\" x-text=\"lines.join('\\n')\"></pre></div><script>\n\t\t\t\t\t\tfunction certLog() {\n\t\t\t\t\t\t\treturn {\n\t\t\t\t\t\t\t\tlines: [],\n\t\t\t\t\t\t\t\tconnect() {\n\t\t\t\t\t\t\t\t\tconst proto = location.protocol === \"https:\" ? \"wss\" : \"ws\";\n\t\t\t\t\t\t\t\t\tconst ws = new WebSocket(proto + \"://\" + location.host + \"/ws/log\");\n\t\t\t\t\t\t\t\t\tws.onmessage = (ev) => {\n\t\t\t\t\t\t\t\t\t\tthis.lines.push(ev.data);\n\t\t\t\t\t\t\t\t\t\tif (this.lines.length > 500) this.lines = this.lines.slice(-500);\n\t\t\t\t\t\t\t\t\t};\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t};\n\t\t\t\t\t\t}\n\t\t\t\t\t</script></section>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -662,7 +699,7 @@ func DashboardBody(status StatusVM, settings SettingsVM) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

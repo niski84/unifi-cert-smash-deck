@@ -31,7 +31,7 @@ cp .env.example .env   # optional PORT / env overrides
 ./scripts/reload.sh
 ```
 
-Open `http://127.0.0.1:8105/` (or your `PORT`). Configure domain, ACME email, Cloudflare DNS token, SSH target, and paths in **Settings**.
+Open `http://127.0.0.1:8105/` (or your `PORT`). Expand **First-time setup checklist** on the dashboard for step-by-step links (Cloudflare API tokens, Let’s Encrypt notes, UniFi SSH). Then fill **Settings** (domain, ACME email, Cloudflare DNS token, SSH target, paths).
 
 Use the **Dark** / **Light** control in the header to switch themes; the choice is stored in the browser as `unificert-theme`.
 
