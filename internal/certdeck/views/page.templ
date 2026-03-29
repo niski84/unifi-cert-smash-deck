@@ -21,6 +21,8 @@ type SettingsVM struct {
 	ACMEEmail            string
 	ACMEUseStaging       bool
 	CloudflareAPIToken   string
+	CloudflareTokenLoaded bool
+	CloudflareEnvVarSet  bool
 	SSHHost              string
 	SSHPort              int
 	SSHUser              string
@@ -34,6 +36,8 @@ type SettingsVM struct {
 	UniFiHost            string
 	UniFiSite            string
 	UniFiAPIKey          string
+	UniFiAPIKeyLoaded    bool
+	UniFiAPIEnvVarSet    bool
 }
 
 templ Layout(title string, content templ.Component) {
@@ -151,8 +155,18 @@ templ SettingsPanel(vm SettingsVM) {
 			</label>
 			<label class="block space-y-1 md:col-span-2">
 				<span class="text-xs text-zinc-600 dark:text-zinc-500">Cloudflare DNS API token</span>
-				<input name="cloudflare_api_token" type="password" value={ vm.CloudflareAPIToken } placeholder="(unchanged if empty)" autocomplete="off" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
+				<input name="cloudflare_api_token" type="password" value={ vm.CloudflareAPIToken } placeholder="Paste token or use .env (see status below)" autocomplete="off" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
+			<div class="md:col-span-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-2.5 text-xs leading-relaxed dark:border-white/10 dark:bg-zinc-950/40">
+				if vm.CloudflareTokenLoaded {
+					<p class="font-medium text-emerald-800 dark:text-emerald-400">Cloudflare DNS token is loaded. The field above shows a masked value (first/last characters only). DNS-01 ACME is ready once domain + SSH are set.</p>
+				} else {
+					<p class="font-medium text-amber-800 dark:text-amber-300">No Cloudflare DNS token in memory. Put <span class="font-mono">CLOUDFLARE_DNS_API_TOKEN=…</span> in <span class="font-mono">.env</span> next to the binary or in the project directory, then restart — or paste a token here and Save.</p>
+				}
+				if vm.CloudflareEnvVarSet {
+					<p class="mt-1.5 text-zinc-600 dark:text-zinc-400">This process has environment variable <span class="font-mono">CLOUDFLARE_DNS_API_TOKEN</span> set (e.g. from <span class="font-mono">.env</span> or your shell).</p>
+				}
+			</div>
 			<label class="block space-y-1">
 				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH host</span>
 				<input name="ssh_host" type="text" value={ vm.SSHHost } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
@@ -205,6 +219,16 @@ templ SettingsPanel(vm SettingsVM) {
 				<span class="text-xs text-zinc-600 dark:text-zinc-500">UniFi API key (optional)</span>
 				<input name="unifi_api_key" type="password" value={ vm.UniFiAPIKey } placeholder="(unchanged if empty)" autocomplete="off" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
+			<div class="md:col-span-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-2 text-xs text-zinc-600 dark:border-white/10 dark:bg-zinc-950/40 dark:text-zinc-400">
+				if vm.UniFiAPIKeyLoaded {
+					<p><span class="font-medium text-zinc-800 dark:text-zinc-300">UniFi API key:</span> loaded (masked above). Wi‑Fi client log line can run when polling is enabled.</p>
+				} else {
+					<p><span class="font-medium text-zinc-800 dark:text-zinc-300">UniFi API key:</span> not set — optional. Set <span class="font-mono">UNIFI_API_KEY</span> in <span class="font-mono">.env</span> or paste here and Save.</p>
+				}
+				if vm.UniFiAPIEnvVarSet {
+					<p class="mt-1"><span class="font-mono">UNIFI_API_KEY</span> is present in the process environment.</p>
+				}
+			</div>
 			<div class="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
 				<button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400/50">Save settings</button>
 				<span id="settings-toast" class="text-sm text-zinc-600 dark:text-zinc-500"></span>

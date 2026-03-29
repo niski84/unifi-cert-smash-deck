@@ -8,13 +8,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/niski84/unifi-cert-smash-deck/internal/certdeck"
 )
 
 func main() {
+	loadDotEnv()
+
 	settings := certdeck.DefaultSettingsPath()
 	svc := certdeck.NewService(settings)
 	cfg := svc.SnapshotConfig()
@@ -28,6 +32,11 @@ func main() {
 	}
 	if cfg.SSHHost != "" {
 		log.Printf("[unificert] ssh target     : %s:%d", cfg.SSHHost, effectivePort(cfg.SSHPort))
+	}
+	if cfg.CloudflareAPIToken != "" {
+		log.Printf("[unificert] cloudflare dns : token loaded (masked in UI; from .env and/or settings file)")
+	} else {
+		log.Printf("[unificert] cloudflare dns : no token — set CLOUDFLARE_DNS_API_TOKEN in .env or Settings")
 	}
 
 	e, err := certdeck.NewEcho(svc)
@@ -70,4 +79,16 @@ func effectivePort(p int) int {
 		return 22
 	}
 	return p
+}
+
+// loadDotEnv loads .env from the current working directory (and the binary’s directory) so
+// CLOUDFLARE_DNS_API_TOKEN etc. apply even when the process is not started via scripts/reload.sh.
+func loadDotEnv() {
+	exe, err := os.Executable()
+	if err == nil {
+		exeDir := filepath.Dir(exe)
+		_ = godotenv.Load(filepath.Join(exeDir, ".env"))
+	}
+	// CWD .env overrides exe directory (typical when developing in the repo).
+	_ = godotenv.Load(".env")
 }

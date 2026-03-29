@@ -5,6 +5,7 @@ import (
 	"context"
 	"io/fs"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -43,9 +44,13 @@ func NewEcho(svc *Service) (*echo.Echo, error) {
 	})
 
 	e.GET("/api/health", func(c echo.Context) error {
+		cfg := svc.SnapshotConfig()
 		return c.JSON(http.StatusOK, map[string]any{
-			"service":  "unifi-cert-smash-deck",
-			"data_dir": DataDir(),
+			"service":                    "unifi-cert-smash-deck",
+			"data_dir":                   DataDir(),
+			"cloudflare_dns_token_loaded": strings.TrimSpace(cfg.CloudflareAPIToken) != "",
+			"domain_configured":          strings.TrimSpace(cfg.Domain) != "",
+			"ssh_host_configured":        strings.TrimSpace(cfg.SSHHost) != "",
 		})
 	})
 
@@ -226,6 +231,8 @@ func (svc *Service) settingsViewModel() views.SettingsVM {
 		ACMEEmail:              c.ACMEEmail,
 		ACMEUseStaging:         c.ACMEUseStaging,
 		CloudflareAPIToken:     maskSecret(c.CloudflareAPIToken),
+		CloudflareTokenLoaded:  strings.TrimSpace(c.CloudflareAPIToken) != "",
+		CloudflareEnvVarSet:    strings.TrimSpace(os.Getenv("CLOUDFLARE_DNS_API_TOKEN")) != "",
 		SSHHost:                c.SSHHost,
 		SSHPort:                port,
 		SSHUser:                nonEmpty(c.SSHUser, "root"),
@@ -239,6 +246,8 @@ func (svc *Service) settingsViewModel() views.SettingsVM {
 		UniFiHost:              c.UniFiHost,
 		UniFiSite:              nonEmpty(c.UniFiSite, "default"),
 		UniFiAPIKey:            maskSecret(c.UniFiAPIKey),
+		UniFiAPIKeyLoaded:      strings.TrimSpace(c.UniFiAPIKey) != "",
+		UniFiAPIEnvVarSet:      strings.TrimSpace(os.Getenv("UNIFI_API_KEY")) != "",
 	}
 }
 

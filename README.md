@@ -27,9 +27,11 @@ See [docs/HTMX_ALPINE.md](docs/HTMX_ALPINE.md) for UI conventions.
 cd goprojects/unifi-cert-smash-deck
 npm install
 ./scripts/compile.sh
-cp .env.example .env   # optional PORT / env overrides
+cp .env.example .env   # optional PORT / env overrides (e.g. CLOUDFLARE_DNS_API_TOKEN)
 ./scripts/reload.sh
 ```
+
+The binary loads `.env` from the **current working directory** and from the **directory containing the executable**, so `CLOUDFLARE_DNS_API_TOKEN` applies even when you do not use `reload.sh`. The Settings page shows whether a token was loaded (masked) and whether the env var is set.
 
 Open `http://127.0.0.1:8105/` (or your `PORT`). Expand **First-time setup checklist** on the dashboard for step-by-step links (Cloudflare API tokens, Let’s Encrypt notes, UniFi SSH). Then fill **Settings** (domain, ACME email, Cloudflare DNS token, SSH target, paths).
 
