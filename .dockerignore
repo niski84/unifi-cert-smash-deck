@@ -1,0 +1,24 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+unifi-cert-smash-deck
+unifi-cert-smash-deck.exe
+unifi-cert-smash-deck.log
+unifi-cert-smash-deck.pid
+dist/
+
+# Runtime data (mounted as volume)
+data/
+
+# Local config
+.env
+
+# Dev tools
+node_modules/
+.cursor/
+docs/screenshots/
+
+# CI/installer sources (not needed in image)
+installer/

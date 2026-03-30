@@ -1,8 +1,14 @@
 # UniFi Cert Smash Deck
 
+[![Release](https://img.shields.io/github/v/release/niski84/unifi-cert-smash-deck)](https://github.com/niski84/unifi-cert-smash-deck/releases)
+[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/niski84/unifi-cert-smash-deck/pkgs/container/unifi-cert-smash-deck)
+[![Issues](https://img.shields.io/github/issues/niski84/unifi-cert-smash-deck)](https://github.com/niski84/unifi-cert-smash-deck/issues)
+
 **A local web dashboard that installs and manages Let's Encrypt certificates on your UniFi Dream Machine.**
 
 Certificate issuance and automatic 90-day renewal run on the UDM itself via **[kchristensen/udm-le](https://github.com/kchristensen/udm-le)**. This app handles setup — SSH key deployment, config generation, and one-click install — plus ongoing cert health monitoring so you always know how many days are left.
+
+> **Bugs, questions, or feature requests?** [Open an issue](https://github.com/niski84/unifi-cert-smash-deck/issues) — all feedback welcome.
 
 ![Demo walkthrough](docs/screenshots/demo.gif)
 
@@ -42,6 +48,24 @@ cp .env.example .env   # edit PORT if needed (default 8105)
 ```
 
 Open **`http://127.0.0.1:8105/`** — you'll land on the setup wizard if this is your first run.
+
+### Windows
+
+Download the latest `*-windows-amd64-setup.exe` from the [Releases page](https://github.com/niski84/unifi-cert-smash-deck/releases), run it, and follow the installer. It installs the binary to `Program Files`, creates Start Menu shortcuts, and optionally registers a Windows service that starts automatically with Windows.
+
+### Docker
+
+```bash
+docker run -d \
+  --name unifi-cert-smash-deck \
+  --restart unless-stopped \
+  -p 8105:8105 \
+  -v "$HOME/.ssh:/home/nonroot/.ssh:ro" \
+  -v unificert-data:/data \
+  ghcr.io/niski84/unifi-cert-smash-deck:latest
+```
+
+Settings are stored in the `/data` volume. Pass `.env` variables with `-e` flags or a `--env-file`. SSH keys mounted at `/home/nonroot/.ssh` are accessible as `/home/nonroot/.ssh/id_ed25519` — set `UNIFICERT_SSH_KEY` accordingly.
 
 ---
 
@@ -144,3 +168,9 @@ See [docs/HTMX_ALPINE.md](docs/HTMX_ALPINE.md) for UI conventions.
 ## Changing the poll interval
 
 **Cert check interval (hours)** in Settings controls how often the app reads the cert over SSH. Restart after changing it (`./scripts/reload.sh`).
+
+---
+
+## Issues & contributing
+
+Found a bug? Something not working with your UDM model, DNS provider, or SSH setup? **[Open an issue](https://github.com/niski84/unifi-cert-smash-deck/issues)** — include your UDM model, DNS provider, and any error output from the log panel. Pull requests are welcome.
