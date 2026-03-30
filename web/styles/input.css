@@ -22,3 +22,14 @@ html.dark {
 html:not(.dark) {
   color-scheme: light;
 }
+
+/* HTMX Indicators */
+.htmx-indicator {
+  display: none !important;
+}
+.htmx-request .htmx-indicator {
+  display: flex !important;
+}
+.htmx-request.htmx-indicator {
+  display: flex !important;
+}

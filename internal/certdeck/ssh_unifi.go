@@ -1,12 +1,12 @@
 package certdeck
 
 import (
+	"bytes"
 	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
@@ -18,7 +18,7 @@ import (
 	"golang.org/x/crypto/ssh/knownhosts"
 )
 
-// SSHUnifi performs remote certificate inspection and installation.
+// SSHUnifi performs read-only remote certificate inspection (udm-le installs on the UDM).
 type SSHUnifi struct {
 	cfg AppConfig
 }
@@ -27,21 +27,48 @@ func NewSSHUnifi(cfg AppConfig) *SSHUnifi {
 	return &SSHUnifi{cfg: cfg}
 }
 
+func sshKeyboardInteractivePassword(password string) ssh.AuthMethod {
+	return ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) ([]string, error) {
+		if len(questions) == 0 {
+			return nil, nil
+		}
+		answers := make([]string, len(questions))
+		for i := range questions {
+			answers[i] = password
+		}
+		return answers, nil
+	})
+}
+
 func (s *SSHUnifi) clientConfig() (*ssh.ClientConfig, error) {
-	keyPath := s.cfg.SSHKeyPath
-	if keyPath == "" {
-		return nil, fmt.Errorf("ssh_key_path is empty")
+	pw := strings.TrimSpace(s.cfg.SSHPassword)
+	if pw == "" {
+		pw = strings.TrimSpace(os.Getenv("UNIFICERT_SSH_PASSWORD"))
 	}
-	raw, err := os.ReadFile(filepath.Clean(keyPath))
-	if err != nil {
-		return nil, fmt.Errorf("read ssh key: %w", err)
+
+	var auth []ssh.AuthMethod
+	if keyPath := strings.TrimSpace(s.cfg.SSHKeyPath); keyPath != "" {
+		raw, err := os.ReadFile(filepath.Clean(keyPath))
+		if err == nil {
+			signer, err := ssh.ParsePrivateKey(raw)
+			if err == nil {
+				auth = append(auth, ssh.PublicKeys(signer))
+			} else if strings.Contains(err.Error(), "passphrase protected") {
+				// Key is protected, we'll rely on password if available
+			}
+		}
 	}
-	signer, err := ssh.ParsePrivateKey(raw)
-	if err != nil {
-		return nil, fmt.Errorf("parse ssh key: %w", err)
+	if pw != "" {
+		// UniFi OS often uses keyboard-interactive instead of plain "password" auth.
+		auth = append(auth, sshKeyboardInteractivePassword(pw))
+		auth = append(auth, ssh.Password(pw))
+	}
+	if len(auth) == 0 {
+		return nil, fmt.Errorf("ssh: set UNIFICERT_SSH_KEY (readable private key) and/or UNIFICERT_SSH_PASSWORD in environment (.env)")
 	}
 
 	var hostKey ssh.HostKeyCallback
+	var err error
 	if kh := strings.TrimSpace(s.cfg.SSHKnownHosts); kh != "" {
 		hostKey, err = knownhosts.New(filepath.Clean(kh))
 		if err != nil {
@@ -57,7 +84,7 @@ func (s *SSHUnifi) clientConfig() (*ssh.ClientConfig, error) {
 	}
 	return &ssh.ClientConfig{
 		User:            user,
-		Auth:            []ssh.AuthMethod{ssh.PublicKeys(signer)},
+		Auth:            auth,
 		HostKeyCallback: hostKey,
 		Timeout:         15 * time.Second,
 	}, nil
@@ -104,9 +131,14 @@ func (s *SSHUnifi) RemoteCertInfo(ctx context.Context) (cn string, notAfter time
 	}
 	defer sftpC.Close()
 
-	f, err := sftpC.Open(s.cfg.RemoteCertPath)
+	path := s.cfg.RemoteCertPath
+	if path == "" {
+		path = "/data/unifi-core/config/unifi-core.crt"
+	}
+
+	f, err := sftpC.Open(path)
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("open remote cert: %w", err)
+		return "", time.Time{}, fmt.Errorf("open remote cert at %s: %w", path, err)
 	}
 	defer f.Close()
 	pemBytes, err := io.ReadAll(f)
@@ -124,50 +156,51 @@ func (s *SSHUnifi) RemoteCertInfo(ctx context.Context) (cn string, notAfter time
 	return cert.Subject.CommonName, cert.NotAfter, nil
 }
 
-// InstallCertificate writes cert and key over SFTP and restarts unifi-core.
-func (s *SSHUnifi) InstallCertificate(ctx context.Context, certPEM, keyPEM []byte) error {
+// RunBootstrap runs the installation/setup script on the remote UDM.
+func (s *SSHUnifi) RunBootstrap(ctx context.Context, script string) (string, error) {
 	client, err := s.dial(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer client.Close()
 
-	sftpC, err := sftp.NewClient(client)
+	session, err := client.NewSession()
 	if err != nil {
-		return err
+		return "", err
 	}
-	defer sftpC.Close()
+	defer session.Close()
 
-	if err := writeRemoteFile(sftpC, s.cfg.RemoteCertPath, certPEM, 0o644); err != nil {
-		return fmt.Errorf("write cert: %w", err)
-	}
-	if err := writeRemoteFile(sftpC, s.cfg.RemoteKeyPath, keyPEM, 0o600); err != nil {
-		return fmt.Errorf("write key: %w", err)
+	var b bytes.Buffer
+	session.Stdout = &b
+	session.Stderr = &b
+
+	if err := session.Run(script); err != nil {
+		return b.String(), fmt.Errorf("bootstrap failed: %w", err)
 	}
 
-	sess, err := client.NewSession()
-	if err != nil {
-		return err
-	}
-	defer sess.Close()
-	out, err := sess.CombinedOutput("systemctl restart unifi-core")
-	if err != nil {
-		return fmt.Errorf("restart unifi-core: %w: %s", err, string(out))
-	}
-	return nil
+	return b.String(), nil
 }
 
-func writeRemoteFile(c *sftp.Client, path string, data []byte, mode uint32) error {
-	f, err := c.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+// CheckUdmLeStatus checks if udm-le is installed and its service status.
+func (s *SSHUnifi) CheckUdmLeStatus(ctx context.Context) (installed bool, timerActive bool, err error) {
+	client, err := s.dial(ctx)
 	if err != nil {
-		return err
+		return false, false, err
 	}
-	if _, err := f.Write(data); err != nil {
-		_ = f.Close()
-		return err
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		return false, false, err
 	}
-	if err := f.Close(); err != nil {
-		return err
-	}
-	return c.Chmod(path, fs.FileMode(mode))
+	defer session.Close()
+
+	cmd := `[ -f /data/udm-le/udm-le.sh ] && echo "INSTALLED"; systemctl is-active udm-le.timer 2>/dev/null || echo "inactive"`
+	out, _ := session.CombinedOutput(cmd)
+	outs := string(out)
+
+	installed = strings.Contains(outs, "INSTALLED")
+	timerActive = strings.Contains(outs, "active") || strings.Contains(outs, "waiting")
+
+	return installed, timerActive, nil
 }

@@ -13,9 +13,7 @@ type RuntimeState struct {
 	CommonName        string    `json:"common_name"`
 	NotAfter          time.Time `json:"not_after"`
 	LastCheckAt       time.Time `json:"last_check_at"`
-	LastSyncAt        time.Time `json:"last_sync_at"`
 	LastError         string    `json:"last_error,omitempty"`
-	Renewing          bool      `json:"renewing"`
 	LastActiveClients int       `json:"last_active_clients"`
 }
 

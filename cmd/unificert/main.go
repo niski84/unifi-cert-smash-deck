@@ -25,21 +25,15 @@ func main() {
 
 	log.Printf("[unificert] data directory : %s", certdeck.DataDir())
 	log.Printf("[unificert] settings file  : %s", settings)
-	if cfg.Domain != "" {
-		log.Printf("[unificert] domain         : %s", cfg.Domain)
-	} else {
-		log.Printf("[unificert] domain         : (not configured — use Settings in the UI)")
+	log.Printf("[unificert] mode            : udm-le helper (no remote ACME)")
+	if cfg.CertHosts != "" {
+		log.Printf("[unificert] cert hosts      : %s", cfg.CertHosts)
 	}
 	if cfg.SSHHost != "" {
-		log.Printf("[unificert] ssh target     : %s:%d", cfg.SSHHost, effectivePort(cfg.SSHPort))
-	}
-	if cfg.CloudflareAPIToken != "" {
-		log.Printf("[unificert] cloudflare dns : token loaded (masked in UI; from .env and/or settings file)")
-	} else {
-		log.Printf("[unificert] cloudflare dns : no token — set CLOUDFLARE_DNS_API_TOKEN in .env or Settings")
+		log.Printf("[unificert] ssh target      : %s:%d", cfg.SSHHost, effectivePort(cfg.SSHPort))
 	}
 	if cfg.UniFiAPIKey != "" {
-		log.Printf("[unificert] unifi api key  : loaded (optional client-count log; from unifi-smash-deck .env and/or this app)")
+		log.Printf("[unificert] unifi api key   : loaded (optional client-count log)")
 	}
 
 	e, err := certdeck.NewEcho(svc)
@@ -56,7 +50,7 @@ func main() {
 		Addr:         addr,
 		Handler:      e,
 		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 0, // WebSocket / long renew
+		WriteTimeout: 120 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
 
@@ -85,17 +79,14 @@ func effectivePort(p int) int {
 }
 
 // loadDotEnv loads env files in order; later files override earlier ones.
-// UNIFI_HOST / UNIFI_API_KEY / UNIFI_SITE are taken from unifi-smash-deck/.env when present
-// (sibling repo under GOPROJECTS or ../unifi-smash-deck), then this app’s .env overrides.
 func loadDotEnv() {
-	try := func(path string) {
-		path = filepath.Clean(path)
-		if _, err := os.Stat(path); err != nil {
-			return
-		}
-		_ = godotenv.Load(path)
+	ordered := getEnvPaths()
+	for _, p := range ordered {
+		_ = godotenv.Load(p)
 	}
+}
 
+func getEnvPaths() []string {
 	seen := make(map[string]bool)
 	var ordered []string
 	add := func(p string) {
@@ -103,30 +94,27 @@ func loadDotEnv() {
 		if seen[p] {
 			return
 		}
-		seen[p] = true
-		ordered = append(ordered, p)
+		if _, err := os.Stat(p); err == nil {
+			seen[p] = true
+			ordered = append(ordered, p)
+		}
 	}
 
+	// 1. GOPROJECTS sibling
 	if gp := os.Getenv("GOPROJECTS"); gp != "" {
 		add(filepath.Join(gp, "unifi-smash-deck", ".env"))
 	}
-	var exeDir, cwd string
-	if exe, err := os.Executable(); err == nil {
-		exeDir = filepath.Dir(exe)
-		add(filepath.Join(exeDir, "..", "unifi-smash-deck", ".env"))
-	}
-	if d, err := os.Getwd(); err == nil {
-		cwd = d
+	// 2. Relative sibling
+	if cwd, err := os.Getwd(); err == nil {
 		add(filepath.Join(cwd, "..", "unifi-smash-deck", ".env"))
-	}
-	if exeDir != "" {
-		add(filepath.Join(exeDir, ".env"))
-	}
-	if cwd != "" {
 		add(filepath.Join(cwd, ".env"))
 	}
-
-	for _, p := range ordered {
-		try(p)
+	// 3. Executable relative
+	if exe, err := os.Executable(); err == nil {
+		exeDir := filepath.Dir(exe)
+		add(filepath.Join(exeDir, "..", "unifi-smash-deck", ".env"))
+		add(filepath.Join(exeDir, ".env"))
 	}
+
+	return ordered
 }

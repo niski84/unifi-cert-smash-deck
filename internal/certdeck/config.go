@@ -2,37 +2,38 @@ package certdeck
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
-// AppConfig holds persisted settings for the UniFi certificate controller.
+// AppConfig holds persisted settings for the udm-le helper dashboard.
 type AppConfig struct {
-	Port   string `json:"port"`
-	Domain string `json:"domain"`
+	Port string `json:"port"`
 
-	ACMEEmail      string `json:"acme_email"`
-	ACMEUseStaging bool   `json:"acme_use_staging"`
+	// udm-le.env generation (saved locally; secrets belong on the UDM)
+	CertEmail             string `json:"cert_email"`
+	CertHosts             string `json:"cert_hosts"` // comma-separated FQDNs, same as CERT_HOSTS
+	CertDaysBeforeRenewal int    `json:"cert_days_before_renewal"`
+	DNSProvider           string `json:"dns_provider"` // cloudflare, route53, digitalocean, duckdns, azure, gcloud, linode, other
 
-	CloudflareAPIToken string `json:"cloudflare_api_token"`
-
-	SSHHost       string `json:"ssh_host"`
-	SSHPort       int    `json:"ssh_port"`
-	SSHUser       string `json:"ssh_user"`
-	SSHKeyPath    string `json:"ssh_key_path"`
-	SSHKnownHosts string `json:"ssh_known_hosts"` // optional path; empty + no fingerprint uses insecure callback (LAN only)
-
+	// Optional: poll installed cert on the gateway (read-only SFTP)
+	SSHHost        string `json:"ssh_host"`
+	SSHPort        int    `json:"ssh_port"`
+	SSHUser        string `json:"ssh_user"`
+	SSHPassword    string `json:"ssh_password,omitempty"`
+	SSHKeyPath     string `json:"ssh_key_path"`
+	SSHKnownHosts  string `json:"ssh_known_hosts"`
 	RemoteCertPath string `json:"remote_cert_path"`
-	RemoteKeyPath  string `json:"remote_key_path"`
 
-	RenewWithinDays      int `json:"renew_within_days"`
-	CheckIntervalHours   int `json:"check_interval_hours"`
-	UniFiActiveClientsPoll bool `json:"unifi_active_clients_poll"` // optional: hit UniFi API for dashboard line
-	UniFiHost            string `json:"unifi_host"`
-	UniFiSite            string `json:"unifi_site"`
-	UniFiAPIKey          string `json:"unifi_api_key"`
+	CheckIntervalHours int `json:"check_interval_hours"` // SSH cert poll
+
+	UniFiActiveClientsPoll bool   `json:"unifi_active_clients_poll"`
+	UniFiHost              string `json:"unifi_host"`
+	UniFiSite              string `json:"unifi_site"`
+	UniFiAPIKey            string `json:"unifi_api_key"`
 }
 
 // DataDir returns persistent data directory (default ./data).
@@ -49,56 +50,71 @@ func DefaultSettingsPath() string {
 
 func LoadAppConfig(path string) AppConfig {
 	cfg := AppConfig{
-		Port:             getenv("PORT", "8105"),
-		Domain:           getenv("UNIFICERT_DOMAIN", ""),
-		ACMEEmail:        getenv("UNIFICERT_ACME_EMAIL", ""),
-		SSHHost:          getenv("UNIFICERT_SSH_HOST", ""),
-		SSHUser:          getenv("UNIFICERT_SSH_USER", "root"),
-		SSHKeyPath:       getenv("UNIFICERT_SSH_KEY", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa")),
-		SSHPort:          22,
-		RemoteCertPath:   "/data/unifi-core/config/unifi-core.crt",
-		RemoteKeyPath:    "/data/unifi-core/config/unifi-core.key",
-		RenewWithinDays:  30,
-		CheckIntervalHours: 24,
-		UniFiSite:        "default",
+		Port:                   getenv("PORT", "8105"),
+		CertEmail:              getenv("UNIFICERT_CERT_EMAIL", ""),
+		CertHosts:              getenv("UNIFICERT_CERT_HOSTS", ""),
+		SSHHost:                getenv("UNIFICERT_SSH_HOST", ""),
+		SSHUser:                getenv("UNIFICERT_SSH_USER", "root"),
+		SSHPassword:            getenv("UNIFICERT_SSH_PASSWORD", ""),
+		SSHKeyPath:             getenv("UNIFICERT_SSH_KEY", filepath.Join(os.Getenv("HOME"), ".ssh", "id_rsa")),
+		SSHPort:                22,
+		RemoteCertPath:         "/data/unifi-core/config/unifi-core.crt",
+		CertDaysBeforeRenewal:  30,
+		CheckIntervalHours:     12,
+		DNSProvider:            "cloudflare",
+		UniFiSite:              "default",
 	}
 	if p := getenv("UNIFICERT_SSH_PORT", ""); p != "" {
 		if n, err := strconv.Atoi(p); err == nil && n > 0 {
 			cfg.SSHPort = n
 		}
 	}
-	cfg.CloudflareAPIToken = getenv("CLOUDFLARE_DNS_API_TOKEN", "")
+	if v := getenv("UNIFICERT_CERT_DAYS", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.CertDaysBeforeRenewal = n
+		}
+	}
+	if v := getenv("UNIFICERT_DNS_PROVIDER", ""); v != "" {
+		cfg.DNSProvider = v
+	}
 	cfg.UniFiHost = getenv("UNIFI_HOST", "")
 	cfg.UniFiAPIKey = getenv("UNIFI_API_KEY", "")
 
+	log.Printf("[unificert] loading config from %s", path)
 	raw, err := os.ReadFile(path)
 	if err == nil {
 		var stored AppConfig
 		if json.Unmarshal(raw, &stored) == nil {
+			log.Printf("[unificert]   merged settings from json file")
 			mergeAppConfig(&cfg, stored)
 		}
 	}
 
+	// Environment variable overrides (higher priority than file)
 	if v := strings.TrimSpace(os.Getenv("PORT")); v != "" {
 		cfg.Port = v
 	}
-	if v := strings.TrimSpace(os.Getenv("UNIFICERT_DOMAIN")); v != "" {
-		cfg.Domain = v
+	if v := strings.TrimSpace(os.Getenv("UNIFICERT_CERT_EMAIL")); v != "" {
+		cfg.CertEmail = v
 	}
-	if v := strings.TrimSpace(os.Getenv("UNIFICERT_ACME_EMAIL")); v != "" {
-		cfg.ACMEEmail = v
+	if v := strings.TrimSpace(os.Getenv("UNIFICERT_CERT_HOSTS")); v != "" {
+		cfg.CertHosts = v
 	}
 	if v := strings.TrimSpace(os.Getenv("UNIFICERT_SSH_HOST")); v != "" {
 		cfg.SSHHost = v
+		log.Printf("[unificert]   env override: SSHHost=%s", v)
 	}
 	if v := strings.TrimSpace(os.Getenv("UNIFICERT_SSH_USER")); v != "" {
 		cfg.SSHUser = v
 	}
+	if v := strings.TrimSpace(os.Getenv("UNIFICERT_SSH_PASSWORD")); v != "" {
+		cfg.SSHPassword = v
+	}
 	if v := strings.TrimSpace(os.Getenv("UNIFICERT_SSH_KEY")); v != "" {
 		cfg.SSHKeyPath = v
 	}
-	if v := strings.TrimSpace(os.Getenv("CLOUDFLARE_DNS_API_TOKEN")); v != "" && v != "your-cloudflare-token" {
-		cfg.CloudflareAPIToken = v
+	if v := strings.TrimSpace(os.Getenv("UNIFICERT_SSH_KNOWN_HOSTS")); v != "" {
+		cfg.SSHKnownHosts = v
 	}
 	if v := strings.TrimSpace(os.Getenv("UNIFI_HOST")); v != "" && v != "https://192.168.1.1" {
 		cfg.UniFiHost = v
@@ -113,15 +129,17 @@ func mergeAppConfig(dst *AppConfig, src AppConfig) {
 	if src.Port != "" {
 		dst.Port = src.Port
 	}
-	if src.Domain != "" {
-		dst.Domain = src.Domain
+	if src.CertEmail != "" {
+		dst.CertEmail = src.CertEmail
 	}
-	if src.ACMEEmail != "" {
-		dst.ACMEEmail = src.ACMEEmail
+	if src.CertHosts != "" {
+		dst.CertHosts = src.CertHosts
 	}
-	dst.ACMEUseStaging = src.ACMEUseStaging
-	if src.CloudflareAPIToken != "" {
-		dst.CloudflareAPIToken = src.CloudflareAPIToken
+	if src.CertDaysBeforeRenewal > 0 {
+		dst.CertDaysBeforeRenewal = src.CertDaysBeforeRenewal
+	}
+	if strings.TrimSpace(src.DNSProvider) != "" {
+		dst.DNSProvider = src.DNSProvider
 	}
 	if src.SSHHost != "" {
 		dst.SSHHost = src.SSHHost
@@ -132,6 +150,9 @@ func mergeAppConfig(dst *AppConfig, src AppConfig) {
 	if src.SSHUser != "" {
 		dst.SSHUser = src.SSHUser
 	}
+	if src.SSHPassword != "" {
+		dst.SSHPassword = src.SSHPassword
+	}
 	if src.SSHKeyPath != "" {
 		dst.SSHKeyPath = src.SSHKeyPath
 	}
@@ -140,12 +161,6 @@ func mergeAppConfig(dst *AppConfig, src AppConfig) {
 	}
 	if src.RemoteCertPath != "" {
 		dst.RemoteCertPath = src.RemoteCertPath
-	}
-	if src.RemoteKeyPath != "" {
-		dst.RemoteKeyPath = src.RemoteKeyPath
-	}
-	if src.RenewWithinDays > 0 {
-		dst.RenewWithinDays = src.RenewWithinDays
 	}
 	if src.CheckIntervalHours > 0 {
 		dst.CheckIntervalHours = src.CheckIntervalHours

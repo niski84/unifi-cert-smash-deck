@@ -12,7 +12,7 @@ This app keeps **most behavior in Go** (routes, lifecycle, persistence) and uses
 ## HTMX
 
 - **Partial swaps:** `GET /fragment/status` returns a self-contained `StatusFragment` that includes its own `hx-get`, `hx-trigger`, and `hx-swap="outerHTML"` on the root node. After each swap, polling continues without extra JavaScript.
-- **Commands:** `POST /api/sync` and `POST /api/settings` return small HTML fragments (`SyncFeedback` or settings toast) via Templ. Targets use predictable `id`s (`#sync-feedback`, `#settings-toast`).
+- **Commands:** `POST /api/check-cert`, `POST /api/settings`, `POST /api/test/cloudflare`, and `POST /api/test/ssh` return small HTML fragments (`SyncFeedback`, `InlineAlert`, or settings toast) via Templ. Targets use predictable `id`s (`#sync-feedback`, `#settings-toast`, `#test-cf-verify`, `#test-ssh-result`).
 - **Principle:** Prefer one HTMX request that returns HTML over hand-written `fetch` + DOM updates unless you need a persistent client-side connection (see WebSocket).
 
 ## Alpine.js

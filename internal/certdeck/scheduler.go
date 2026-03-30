@@ -6,16 +6,16 @@ import (
 	"time"
 )
 
-// Scheduler runs periodic certificate checks.
+// Scheduler runs periodic remote cert checks (optional SSH read-only).
 type Scheduler struct {
 	mu       sync.Mutex
 	stop     chan struct{}
 	stopped  chan struct{}
 	interval time.Duration
-	run      func(ctx context.Context, forceRenew bool)
+	run      func(ctx context.Context)
 }
 
-func NewScheduler(interval time.Duration, run func(ctx context.Context, forceRenew bool)) *Scheduler {
+func NewScheduler(interval time.Duration, run func(ctx context.Context)) *Scheduler {
 	if interval < time.Minute {
 		interval = time.Hour
 	}
@@ -44,13 +44,13 @@ func (s *Scheduler) Start() {
 		t := time.NewTicker(interval)
 		defer t.Stop()
 		ctx := context.Background()
-		run(ctx, false)
+		run(ctx)
 		for {
 			select {
 			case <-stop:
 				return
 			case <-t.C:
-				run(ctx, false)
+				run(ctx)
 			}
 		}
 	}()
