@@ -7,14 +7,12 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/a-h/templ"
 	"github.com/gorilla/websocket"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/niski84/unifi-cert-smash-deck/internal/certdeck/views"
@@ -57,24 +55,36 @@ func NewEcho(svc *Service) (*echo.Echo, error) {
 	// Wizard routes.
 	e.GET("/wizard", svc.handleWizardPage)
 	e.GET("/api/wizard/body", svc.handleWizardBody)
-	e.POST("/api/wizard/step/0", svc.handleWizardStep0)
+	e.POST("/api/wizard/step/0", svc.handleWizardConnect)
 	e.POST("/api/wizard/step/1", svc.handleWizardStep1)
 	e.POST("/api/wizard/step/2", svc.handleWizardStep2)
-	e.POST("/api/wizard/step/3", svc.handleWizardStep3)
-	e.POST("/api/wizard/step/4/start", svc.handleWizardStep4Start)
-	e.POST("/api/wizard/step/5", svc.handleWizardStep5)
+	e.POST("/api/wizard/step/3/start", svc.handleWizardStep3Start)
+	e.POST("/api/wizard/step/3/token", svc.handleWizardStep3Token)
+	e.POST("/api/wizard/step/4", svc.handleWizardStep4)
 	e.POST("/api/wizard/reset", svc.handleWizardReset)
 
 	e.GET("/api/health", func(c echo.Context) error {
 		cfg := svc.SnapshotConfig()
-		return c.JSON(http.StatusOK, map[string]any{
-			"service":              "unifi-cert-smash-deck",
-			"mode":                 "udm-le-helper",
-			"data_dir":             DataDir(),
+		st := svc.State().Snapshot()
+		vm := svc.statusViewModel()
+		resp := map[string]any{
+			"service":               "unifi-cert-smash-deck",
+			"mode":                  "udm-le-helper",
+			"data_dir":              DataDir(),
 			"cert_hosts_configured": strings.TrimSpace(cfg.CertHosts) != "",
 			"ssh_host_configured":   strings.TrimSpace(cfg.SSHHost) != "",
 			"unifi_api_key_loaded":  strings.TrimSpace(cfg.UniFiAPIKey) != "",
-		})
+			"cert_healthy":          vm.Healthy,
+			"cert_days_left":        vm.DaysLeft,
+			"cert_common_name":      vm.CommonName,
+			"cert_known":            vm.RemoteCertKnown,
+			"last_check":            st.LastCheckAt,
+			"last_error":            st.LastError,
+		}
+		if !st.NotAfter.IsZero() {
+			resp["cert_expires"] = st.NotAfter.UTC().Format(time.RFC3339)
+		}
+		return c.JSON(http.StatusOK, resp)
 	})
 
 	e.POST("/api/settings", svc.handleSettingsForm)
@@ -159,14 +169,6 @@ func (svc *Service) handleSettingsForm(c echo.Context) error {
 		cur.UniFiAPIKey = v
 	}
 
-	// Overload from .env files again
-	if gp := os.Getenv("GOPROJECTS"); gp != "" {
-		_ = godotenv.Overload(filepath.Join(gp, "unifi-cert-smash-deck", ".env"))
-	}
-	if cwd, err := os.Getwd(); err == nil {
-		_ = godotenv.Overload(filepath.Join(cwd, ".env"))
-	}
-
 	if err := SaveAppConfig(svc.SettingsPath(), cur); err != nil {
 		return renderHTML(c, http.StatusInternalServerError, views.SyncFeedback(false, "Save failed: "+err.Error()))
 	}
@@ -219,14 +221,6 @@ func (svc *Service) handleTestCloudflare(c echo.Context) error {
 }
 
 func (svc *Service) handleTestSSH(c echo.Context) error {
-	// Re-load all relevant .env files in order
-	if gp := os.Getenv("GOPROJECTS"); gp != "" {
-		_ = godotenv.Overload(filepath.Join(gp, "unifi-cert-smash-deck", ".env"))
-	}
-	if cwd, err := os.Getwd(); err == nil {
-		_ = godotenv.Overload(filepath.Join(cwd, ".env"))
-	}
-
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 60*time.Second)
 	defer cancel()
 
@@ -373,7 +367,7 @@ func (svc *Service) statusViewModel() views.StatusVM {
 		cn = "—"
 	}
 
-	vm := views.StatusVM{
+	return views.StatusVM{
 		CommonName:      cn,
 		DaysLeft:        daysLeft,
 		Healthy:         healthy,
@@ -381,18 +375,9 @@ func (svc *Service) statusViewModel() views.StatusVM {
 		LastError:       st.LastError,
 		SSHConfigured:   sshOK,
 		RemoteCertKnown: remoteKnown,
+		UdmLeInstalled:  st.UdmLeInstalled,
+		UdmLeActive:     st.UdmLeActive,
 	}
-
-	if sshOK {
-		sshC := NewSSHUnifi(cfg)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		inst, active, _ := sshC.CheckUdmLeStatus(ctx)
-		vm.UdmLeInstalled = inst
-		vm.UdmLeActive = active
-	}
-
-	return vm
 }
 
 func (svc *Service) settingsViewModel() views.SettingsVM {
@@ -485,12 +470,16 @@ func isMaskedSecret(s string) bool {
 
 func (svc *Service) buildWizardVM() views.WizardVM {
 	st := svc.Wizard.Snapshot()
+	envToken := dnsTokenFromEnv(st.DNSProvider)
 	vm := views.WizardVM{
-		State:          st,
-		InstallRunning: svc.IsInstallRunning(),
-		InstallError:   svc.InstallError(),
+		State:             st,
+		InstallRunning:    svc.IsInstallRunning(),
+		InstallError:      svc.InstallError(),
+		DNSTokenFromEnv:   envToken != "",
+		SSHPasswordMasked: maskSecret(svc.SnapshotConfig().SSHPassword),
+		DNSTokenMasked:    maskSecret(envToken),
 	}
-	for n := 0; n < 6; n++ {
+	for n := 0; n < 5; n++ {
 		if r, ok := st.Results[n]; ok {
 			if n == wizard.StepInstall && vm.InstallRunning {
 				vm.StepStatus[n] = "running"
@@ -503,7 +492,26 @@ func (svc *Service) buildWizardVM() views.WizardVM {
 			vm.StepStatus[n] = "locked"
 		}
 	}
+	if !vm.InstallRunning && st.StepPassed(wizard.StepPreflight) {
+		vm.TokenNeeded = svc.wizSession.getDNSToken() == ""
+	}
 	return vm
+}
+
+// dnsTokenFromEnv returns a provider-specific API token from the environment, if set.
+func dnsTokenFromEnv(provider string) string {
+	switch strings.ToLower(strings.TrimSpace(provider)) {
+	case "cloudflare":
+		return strings.TrimSpace(os.Getenv("CLOUDFLARE_DNS_API_TOKEN"))
+	case "digitalocean":
+		return strings.TrimSpace(os.Getenv("DO_AUTH_TOKEN"))
+	case "duckdns":
+		return strings.TrimSpace(os.Getenv("DUCKDNS_TOKEN"))
+	case "linode":
+		return strings.TrimSpace(os.Getenv("LINODE_TOKEN"))
+	default:
+		return ""
+	}
 }
 
 func (svc *Service) renderWizardBody(c echo.Context) error {
@@ -524,82 +532,51 @@ func (svc *Service) handleWizardBody(c echo.Context) error {
 
 func (svc *Service) handleWizardReset(c echo.Context) error {
 	svc.Wizard.Reset()
+	svc.seedWizardFromConfig()
 	return svc.renderWizardBody(c)
 }
 
 // ---------------------------------------------------------------------------
-// Wizard: Step 0 — Discover
+// Wizard: Step 0 — Connect (merged Discover + SSH)
 // ---------------------------------------------------------------------------
 
-func (svc *Service) handleWizardStep0(c echo.Context) error {
+// handleWizardConnect is step 0: discovers UDM reachability and sets up SSH in one shot.
+func (svc *Service) handleWizardConnect(c echo.Context) error {
 	host := strings.TrimSpace(c.FormValue("udm_host"))
 	port, _ := strconv.Atoi(c.FormValue("udm_port"))
 	if port <= 0 {
 		port = 22
 	}
-
-	ctx, cancel := context.WithTimeout(c.Request().Context(), 15*time.Second)
-	defer cancel()
-
-	checks := WizDiscover(ctx, host, port)
-	passed := allRequired(checks)
-
-	svc.Wizard.Update(func(st *wizard.State) {
-		st.UDMHost = host
-		st.UDMPort = port
-		st.Results[wizard.StepDiscover] = &wizard.StepResult{
-			StepNum: wizard.StepDiscover,
-			Status:  resultStatus(passed),
-			Checks:  checks,
-		}
-		if passed && st.CurrentStep <= wizard.StepDiscover {
-			st.CurrentStep = wizard.StepSSH
-		}
-	})
-
-	return svc.renderWizardBody(c)
-}
-
-// ---------------------------------------------------------------------------
-// Wizard: Step 1 — SSH
-// ---------------------------------------------------------------------------
-
-func (svc *Service) handleWizardStep1(c echo.Context) error {
 	user := strings.TrimSpace(c.FormValue("ssh_user"))
 	if user == "" {
 		user = "root"
 	}
 	password := c.FormValue("ssh_password")
-
-	st := svc.Wizard.Snapshot()
-	host := st.UDMHost
-	port := st.UDMPort
-	if port == 0 {
-		port = 22
+	// Treat blank or masked (pre-filled from .env display) as "use config value".
+	if strings.TrimSpace(password) == "" || isMaskedSecret(password) {
+		password = svc.SnapshotConfig().SSHPassword
 	}
 
-	// Store password in session (cleared after key deploy).
 	svc.wizSession.setSSHPass(password)
 
-	ctx, cancel := context.WithTimeout(c.Request().Context(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 75*time.Second)
 	defer cancel()
 
-	checks, result := WizSSH(ctx, host, port, user, password, st.SSHKeyPath, DataDir())
+	st := svc.Wizard.Snapshot()
+	checks, result := WizConnect(ctx, host, port, user, password, st.SSHKeyPath, DataDir())
 	passed := allRequired(checks)
 
-	// Clear password from session after deploy attempt.
 	svc.wizSession.clearSSHPass()
 
 	svc.Wizard.Update(func(s *wizard.State) {
+		s.UDMHost = host
+		s.UDMPort = port
 		s.SSHUser = user
 		if result.SSHKeyPath != "" {
 			s.SSHKeyPath = result.SSHKeyPath
 		}
 		if result.KnownHostsPath != "" {
 			s.SSHKnownHosts = result.KnownHostsPath
-		}
-		if result.UDMOSVersion != "" {
-			s.UDMOSVersion = result.UDMOSVersion
 		}
 		if result.UDMLeState != wizard.UDMLeUnknown {
 			s.UDMLeState = result.UDMLeState
@@ -610,12 +587,12 @@ func (svc *Service) handleWizardStep1(c echo.Context) error {
 		if result.SSHKeyPath != "" {
 			s.KeyGenerated = true
 		}
-		s.Results[wizard.StepSSH] = &wizard.StepResult{
-			StepNum: wizard.StepSSH,
+		s.Results[wizard.StepConnect] = &wizard.StepResult{
+			StepNum: wizard.StepConnect,
 			Status:  resultStatus(passed),
 			Checks:  checks,
 		}
-		if passed && s.CurrentStep <= wizard.StepSSH {
+		if passed && s.CurrentStep <= wizard.StepConnect {
 			s.CurrentStep = wizard.StepDomain
 		}
 	})
@@ -624,14 +601,18 @@ func (svc *Service) handleWizardStep1(c echo.Context) error {
 }
 
 // ---------------------------------------------------------------------------
-// Wizard: Step 2 — Domain & DNS
+// Wizard: Step 1 — Domain & DNS
 // ---------------------------------------------------------------------------
 
-func (svc *Service) handleWizardStep2(c echo.Context) error {
+func (svc *Service) handleWizardStep1(c echo.Context) error {
 	hosts := strings.TrimSpace(c.FormValue("cert_hosts"))
 	email := strings.TrimSpace(c.FormValue("cert_email"))
 	provider := strings.TrimSpace(c.FormValue("dns_provider"))
 	token := c.FormValue("dns_token")
+	// Treat blank or masked (pre-filled from .env display) as "use env value".
+	if strings.TrimSpace(token) == "" || isMaskedSecret(token) {
+		token = dnsTokenFromEnv(provider)
+	}
 
 	// Store token in session — never persisted to disk.
 	svc.wizSession.setDNSToken(token)
@@ -663,10 +644,10 @@ func (svc *Service) handleWizardStep2(c echo.Context) error {
 }
 
 // ---------------------------------------------------------------------------
-// Wizard: Step 3 — Preflight
+// Wizard: Step 2 — Preflight
 // ---------------------------------------------------------------------------
 
-func (svc *Service) handleWizardStep3(c echo.Context) error {
+func (svc *Service) handleWizardStep2(c echo.Context) error {
 	staging := c.FormValue("staging_mode") == "true"
 
 	st := svc.Wizard.Snapshot()
@@ -695,10 +676,10 @@ func (svc *Service) handleWizardStep3(c echo.Context) error {
 }
 
 // ---------------------------------------------------------------------------
-// Wizard: Step 4 — Install (async)
+// Wizard: Step 3 — Install (async)
 // ---------------------------------------------------------------------------
 
-func (svc *Service) handleWizardStep4Start(c echo.Context) error {
+func (svc *Service) handleWizardStep3Start(c echo.Context) error {
 	if svc.IsInstallRunning() {
 		return svc.renderWizardBody(c)
 	}
@@ -717,7 +698,7 @@ func (svc *Service) handleWizardStep4Start(c echo.Context) error {
 					ID:       "token_missing",
 					Label:    "DNS token required",
 					Status:   wizard.StatusFailed,
-					Detail:   "Session expired — go back to Domain step and re-enter your DNS token.",
+					Detail:   "Session expired — re-enter your DNS token to continue.",
 					Required: true,
 				}},
 			}
@@ -738,11 +719,25 @@ func (svc *Service) handleWizardStep4Start(c echo.Context) error {
 	return svc.renderWizardBody(c)
 }
 
+// handleWizardStep3Token accepts a DNS token after session expiry and resumes the install step.
+func (svc *Service) handleWizardStep3Token(c echo.Context) error {
+	token := strings.TrimSpace(c.FormValue("dns_token"))
+	// If form field left blank, try the environment (same fallback as step 1).
+	if token == "" {
+		token = dnsTokenFromEnv(svc.Wizard.Snapshot().DNSProvider)
+	}
+	if token == "" {
+		return svc.renderWizardBody(c)
+	}
+	svc.wizSession.setDNSToken(token)
+	return svc.renderWizardBody(c)
+}
+
 // ---------------------------------------------------------------------------
-// Wizard: Step 5 — Verify
+// Wizard: Step 4 — Verify
 // ---------------------------------------------------------------------------
 
-func (svc *Service) handleWizardStep5(c echo.Context) error {
+func (svc *Service) handleWizardStep4(c echo.Context) error {
 	st := svc.Wizard.Snapshot()
 	cfg := svc.buildSSHCfgFromWizard(st)
 
