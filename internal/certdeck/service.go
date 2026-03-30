@@ -3,8 +3,48 @@ package certdeck
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/niski84/unifi-cert-smash-deck/internal/wizard"
 )
+
+// wizardSession holds in-memory secrets that are never persisted to disk.
+type wizardSession struct {
+	mu       sync.Mutex
+	dnsToken string // cleared after writing to UDM
+	sshPass  string // cleared after key deployment
+}
+
+func (ws *wizardSession) setDNSToken(t string) {
+	ws.mu.Lock()
+	ws.dnsToken = t
+	ws.mu.Unlock()
+}
+
+func (ws *wizardSession) getDNSToken() string {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+	return ws.dnsToken
+}
+
+func (ws *wizardSession) setSSHPass(p string) {
+	ws.mu.Lock()
+	ws.sshPass = p
+	ws.mu.Unlock()
+}
+
+func (ws *wizardSession) getSSHPass() string {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+	return ws.sshPass
+}
+
+func (ws *wizardSession) clearSSHPass() {
+	ws.mu.Lock()
+	ws.sshPass = ""
+	ws.mu.Unlock()
+}
 
 // Service coordinates scheduling, persistence, and the udm-le helper UI.
 type Service struct {
@@ -15,6 +55,13 @@ type Service struct {
 	state        *StateStore
 	log          *DeckLogger
 	sched        *Scheduler
+
+	// Wizard
+	Wizard         *wizard.Store
+	wizSession     *wizardSession
+	installRunning atomic.Bool
+	installErrMu   sync.Mutex
+	installErr     string
 }
 
 func NewService(settingsPath string) *Service {
@@ -24,8 +71,10 @@ func NewService(settingsPath string) *Service {
 		settingsPath: settingsPath,
 		state:        NewStateStore(),
 		log:          NewDeckLogger(),
+		Wizard:       wizard.NewStore(DataDir()),
+		wizSession:   &wizardSession{},
 	}
-	s.log.Info("UniFi Cert Smash Deck started — udm-le helper (see Settings).")
+	s.log.Info("UniFi Cert Smash Deck started — setup wizard active (see /wizard).")
 	return s
 }
 
@@ -47,6 +96,91 @@ func (s *Service) State() *StateStore { return s.state }
 
 func (s *Service) SettingsPath() string { return s.settingsPath }
 
+func (s *Service) IsInstallRunning() bool { return s.installRunning.Load() }
+
+func (s *Service) InstallError() string {
+	s.installErrMu.Lock()
+	defer s.installErrMu.Unlock()
+	return s.installErr
+}
+
+func (s *Service) setInstallError(err string) {
+	s.installErrMu.Lock()
+	s.installErr = err
+	s.installErrMu.Unlock()
+}
+
+// StartInstall begins the async install goroutine for wizard step 4.
+func (s *Service) StartInstall(cfg AppConfig, token string, action wizard.InstallAction, staging bool) {
+	if s.installRunning.Swap(true) {
+		return // already running
+	}
+	s.setInstallError("")
+
+	go func() {
+		defer s.installRunning.Store(false)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer cancel()
+
+		// Bridge log channel to DeckLogger (broadcasts to WebSocket).
+		logCh := make(chan string, 256)
+		go func() {
+			for line := range logCh {
+				s.log.Info("[udm-le] %s", line)
+			}
+		}()
+
+		err := WizInstall(ctx, cfg, token, action, staging, logCh)
+		close(logCh)
+
+		if err != nil {
+			s.log.Warn("Install failed: %v", err)
+			s.setInstallError(err.Error())
+			s.Wizard.Update(func(st *wizard.State) {
+				st.Results[wizard.StepInstall] = &wizard.StepResult{
+					StepNum: wizard.StepInstall,
+					Status:  "failed",
+				}
+			})
+			return
+		}
+
+		s.log.Info("Install succeeded — running verify checks.")
+		s.Wizard.Update(func(st *wizard.State) {
+			st.Results[wizard.StepInstall] = &wizard.StepResult{
+				StepNum:    wizard.StepInstall,
+				Status:     "passed",
+				FinishedAt: time.Now(),
+			}
+			if st.CurrentStep <= wizard.StepInstall {
+				st.CurrentStep = wizard.StepVerify
+			}
+		})
+	}()
+}
+
+// SyncConfigFromWizard writes the wizard SSH/cert settings into AppConfig and saves.
+// Called when the wizard completes step 5 successfully.
+func (s *Service) SyncConfigFromWizard() {
+	st := s.Wizard.Snapshot()
+	s.mu.Lock()
+	s.cfg.SSHHost = st.UDMHost
+	s.cfg.SSHPort = st.UDMPort
+	s.cfg.SSHUser = st.SSHUser
+	s.cfg.SSHKeyPath = st.SSHKeyPath
+	s.cfg.SSHKnownHosts = st.SSHKnownHosts
+	s.cfg.CertEmail = st.CertEmail
+	s.cfg.CertHosts = st.CertHosts
+	s.cfg.DNSProvider = st.DNSProvider
+	if s.cfg.RemoteCertPath == "" {
+		s.cfg.RemoteCertPath = "/data/unifi-core/config/unifi-core.crt"
+	}
+	cfg := s.cfg
+	s.mu.Unlock()
+	_ = SaveAppConfig(s.settingsPath, cfg)
+}
+
 // RunCheckCycle reads the gateway certificate over SSH (if configured) and optionally polls UniFi API.
 func (s *Service) RunCheckCycle(ctx context.Context) {
 	s.runMu.Lock()
@@ -57,7 +191,7 @@ func (s *Service) RunCheckCycle(ctx context.Context) {
 	_ = s.state.Update(func(st *RuntimeState) { st.LastCheckAt = now })
 
 	if cfg.SSHHost == "" {
-		s.log.Info("SSH not configured — skipping remote cert read (configure udm-le on the UDM).")
+		s.log.Info("SSH not configured — skipping remote cert read.")
 		_ = s.state.Update(func(st *RuntimeState) { st.LastError = "" })
 		return
 	}
@@ -67,9 +201,7 @@ func (s *Service) RunCheckCycle(ctx context.Context) {
 	cn, notAfter, errRead := sshC.RemoteCertInfo(ctx)
 	if errRead != nil {
 		s.log.Warn("Remote cert read failed: %v", errRead)
-		_ = s.state.Update(func(st *RuntimeState) {
-			st.LastError = errRead.Error()
-		})
+		_ = s.state.Update(func(st *RuntimeState) { st.LastError = errRead.Error() })
 		return
 	}
 	dleft := int(time.Until(notAfter).Hours() / 24)

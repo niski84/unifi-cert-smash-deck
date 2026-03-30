@@ -18,6 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/niski84/unifi-cert-smash-deck/internal/certdeck/views"
+	"github.com/niski84/unifi-cert-smash-deck/internal/wizard"
 	certweb "github.com/niski84/unifi-cert-smash-deck/web"
 )
 
@@ -39,12 +40,30 @@ func NewEcho(svc *Service) (*echo.Echo, error) {
 	fsHandler := http.FileServer(http.FS(staticRoot))
 	e.GET("/static/*", echo.WrapHandler(http.StripPrefix("/static/", fsHandler)))
 
+	// Root: redirect to wizard if not done, otherwise dashboard.
 	e.GET("/", func(c echo.Context) error {
+		if !svc.Wizard.IsDone() {
+			return c.Redirect(http.StatusFound, "/wizard")
+		}
+		return renderHTML(c, http.StatusOK, views.DashboardPage(svc.statusViewModel(), svc.settingsViewModel()))
+	})
+	e.GET("/dashboard", func(c echo.Context) error {
 		return renderHTML(c, http.StatusOK, views.DashboardPage(svc.statusViewModel(), svc.settingsViewModel()))
 	})
 	e.GET("/fragment/status", func(c echo.Context) error {
 		return renderHTML(c, http.StatusOK, views.StatusFragment(svc.statusViewModel()))
 	})
+
+	// Wizard routes.
+	e.GET("/wizard", svc.handleWizardPage)
+	e.GET("/api/wizard/body", svc.handleWizardBody)
+	e.POST("/api/wizard/step/0", svc.handleWizardStep0)
+	e.POST("/api/wizard/step/1", svc.handleWizardStep1)
+	e.POST("/api/wizard/step/2", svc.handleWizardStep2)
+	e.POST("/api/wizard/step/3", svc.handleWizardStep3)
+	e.POST("/api/wizard/step/4/start", svc.handleWizardStep4Start)
+	e.POST("/api/wizard/step/5", svc.handleWizardStep5)
+	e.POST("/api/wizard/reset", svc.handleWizardReset)
 
 	e.GET("/api/health", func(c echo.Context) error {
 		cfg := svc.SnapshotConfig()
@@ -458,4 +477,349 @@ func maskSecret(s string) string {
 
 func isMaskedSecret(s string) bool {
 	return strings.Contains(s, "•") || strings.HasPrefix(s, "••••")
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: view model builder
+// ---------------------------------------------------------------------------
+
+func (svc *Service) buildWizardVM() views.WizardVM {
+	st := svc.Wizard.Snapshot()
+	vm := views.WizardVM{
+		State:          st,
+		InstallRunning: svc.IsInstallRunning(),
+		InstallError:   svc.InstallError(),
+	}
+	for n := 0; n < 6; n++ {
+		if r, ok := st.Results[n]; ok {
+			if n == wizard.StepInstall && vm.InstallRunning {
+				vm.StepStatus[n] = "running"
+			} else {
+				vm.StepStatus[n] = r.Status
+			}
+		} else if n == 0 || st.StepPassed(n-1) {
+			vm.StepStatus[n] = "active"
+		} else {
+			vm.StepStatus[n] = "locked"
+		}
+	}
+	return vm
+}
+
+func (svc *Service) renderWizardBody(c echo.Context) error {
+	return renderHTML(c, http.StatusOK, views.WizardFragment(svc.buildWizardVM()))
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: page + body fragment
+// ---------------------------------------------------------------------------
+
+func (svc *Service) handleWizardPage(c echo.Context) error {
+	return renderHTML(c, http.StatusOK, views.WizardPage(svc.buildWizardVM()))
+}
+
+func (svc *Service) handleWizardBody(c echo.Context) error {
+	return svc.renderWizardBody(c)
+}
+
+func (svc *Service) handleWizardReset(c echo.Context) error {
+	svc.Wizard.Reset()
+	return svc.renderWizardBody(c)
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: Step 0 — Discover
+// ---------------------------------------------------------------------------
+
+func (svc *Service) handleWizardStep0(c echo.Context) error {
+	host := strings.TrimSpace(c.FormValue("udm_host"))
+	port, _ := strconv.Atoi(c.FormValue("udm_port"))
+	if port <= 0 {
+		port = 22
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 15*time.Second)
+	defer cancel()
+
+	checks := WizDiscover(ctx, host, port)
+	passed := allRequired(checks)
+
+	svc.Wizard.Update(func(st *wizard.State) {
+		st.UDMHost = host
+		st.UDMPort = port
+		st.Results[wizard.StepDiscover] = &wizard.StepResult{
+			StepNum: wizard.StepDiscover,
+			Status:  resultStatus(passed),
+			Checks:  checks,
+		}
+		if passed && st.CurrentStep <= wizard.StepDiscover {
+			st.CurrentStep = wizard.StepSSH
+		}
+	})
+
+	return svc.renderWizardBody(c)
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: Step 1 — SSH
+// ---------------------------------------------------------------------------
+
+func (svc *Service) handleWizardStep1(c echo.Context) error {
+	user := strings.TrimSpace(c.FormValue("ssh_user"))
+	if user == "" {
+		user = "root"
+	}
+	password := c.FormValue("ssh_password")
+
+	st := svc.Wizard.Snapshot()
+	host := st.UDMHost
+	port := st.UDMPort
+	if port == 0 {
+		port = 22
+	}
+
+	// Store password in session (cleared after key deploy).
+	svc.wizSession.setSSHPass(password)
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 60*time.Second)
+	defer cancel()
+
+	checks, result := WizSSH(ctx, host, port, user, password, st.SSHKeyPath, DataDir())
+	passed := allRequired(checks)
+
+	// Clear password from session after deploy attempt.
+	svc.wizSession.clearSSHPass()
+
+	svc.Wizard.Update(func(s *wizard.State) {
+		s.SSHUser = user
+		if result.SSHKeyPath != "" {
+			s.SSHKeyPath = result.SSHKeyPath
+		}
+		if result.KnownHostsPath != "" {
+			s.SSHKnownHosts = result.KnownHostsPath
+		}
+		if result.UDMOSVersion != "" {
+			s.UDMOSVersion = result.UDMOSVersion
+		}
+		if result.UDMLeState != wizard.UDMLeUnknown {
+			s.UDMLeState = result.UDMLeState
+		}
+		s.CurrentCertCN = result.CertCN
+		s.CurrentCertDays = result.CertDays
+		s.CurrentCertSelfSigned = result.CertSelfSigned
+		if result.SSHKeyPath != "" {
+			s.KeyGenerated = true
+		}
+		s.Results[wizard.StepSSH] = &wizard.StepResult{
+			StepNum: wizard.StepSSH,
+			Status:  resultStatus(passed),
+			Checks:  checks,
+		}
+		if passed && s.CurrentStep <= wizard.StepSSH {
+			s.CurrentStep = wizard.StepDomain
+		}
+	})
+
+	return svc.renderWizardBody(c)
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: Step 2 — Domain & DNS
+// ---------------------------------------------------------------------------
+
+func (svc *Service) handleWizardStep2(c echo.Context) error {
+	hosts := strings.TrimSpace(c.FormValue("cert_hosts"))
+	email := strings.TrimSpace(c.FormValue("cert_email"))
+	provider := strings.TrimSpace(c.FormValue("dns_provider"))
+	token := c.FormValue("dns_token")
+
+	// Store token in session — never persisted to disk.
+	svc.wizSession.setDNSToken(token)
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 20*time.Second)
+	defer cancel()
+
+	checks, domainResult := WizDomain(ctx, hosts, email, provider, token)
+	passed := allRequired(checks)
+
+	svc.Wizard.Update(func(s *wizard.State) {
+		s.CertHosts = hosts
+		s.CertEmail = email
+		s.DNSProvider = provider
+		if domainResult.DNSZone != "" {
+			s.DNSZone = domainResult.DNSZone
+		}
+		s.Results[wizard.StepDomain] = &wizard.StepResult{
+			StepNum: wizard.StepDomain,
+			Status:  resultStatus(passed),
+			Checks:  checks,
+		}
+		if passed && s.CurrentStep <= wizard.StepDomain {
+			s.CurrentStep = wizard.StepPreflight
+		}
+	})
+
+	return svc.renderWizardBody(c)
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: Step 3 — Preflight
+// ---------------------------------------------------------------------------
+
+func (svc *Service) handleWizardStep3(c echo.Context) error {
+	staging := c.FormValue("staging_mode") == "true"
+
+	st := svc.Wizard.Snapshot()
+	cfg := svc.buildSSHCfgFromWizard(st)
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 30*time.Second)
+	defer cancel()
+
+	checks, preflightResult := WizPreflight(ctx, cfg, st.UDMLeState, st.CertHosts)
+	passed := allRequired(checks)
+
+	svc.Wizard.Update(func(s *wizard.State) {
+		s.StagingMode = staging
+		s.InstallAction = preflightResult.Action
+		s.Results[wizard.StepPreflight] = &wizard.StepResult{
+			StepNum: wizard.StepPreflight,
+			Status:  resultStatus(passed),
+			Checks:  checks,
+		}
+		if passed && s.CurrentStep <= wizard.StepPreflight {
+			s.CurrentStep = wizard.StepInstall
+		}
+	})
+
+	return svc.renderWizardBody(c)
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: Step 4 — Install (async)
+// ---------------------------------------------------------------------------
+
+func (svc *Service) handleWizardStep4Start(c echo.Context) error {
+	if svc.IsInstallRunning() {
+		return svc.renderWizardBody(c)
+	}
+
+	st := svc.Wizard.Snapshot()
+	cfg := svc.buildSSHCfgFromWizard(st)
+	token := svc.wizSession.getDNSToken()
+
+	if token == "" {
+		// Token not in session (e.g. server restarted) — mark step as needing re-entry.
+		svc.Wizard.Update(func(s *wizard.State) {
+			s.Results[wizard.StepInstall] = &wizard.StepResult{
+				StepNum: wizard.StepInstall,
+				Status:  "failed",
+				Checks: []wizard.Check{{
+					ID:       "token_missing",
+					Label:    "DNS token required",
+					Status:   wizard.StatusFailed,
+					Detail:   "Session expired — go back to Domain step and re-enter your DNS token.",
+					Required: true,
+				}},
+			}
+		})
+		return svc.renderWizardBody(c)
+	}
+
+	// Mark step as running.
+	svc.Wizard.Update(func(s *wizard.State) {
+		s.Results[wizard.StepInstall] = &wizard.StepResult{
+			StepNum:   wizard.StepInstall,
+			Status:    "running",
+			StartedAt: time.Now(),
+		}
+	})
+
+	svc.StartInstall(cfg, token, st.InstallAction, st.StagingMode)
+	return svc.renderWizardBody(c)
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: Step 5 — Verify
+// ---------------------------------------------------------------------------
+
+func (svc *Service) handleWizardStep5(c echo.Context) error {
+	st := svc.Wizard.Snapshot()
+	cfg := svc.buildSSHCfgFromWizard(st)
+
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 30*time.Second)
+	defer cancel()
+
+	checks := WizVerify(ctx, cfg, st.CertHosts)
+	passed := allRequired(checks)
+
+	// Extract issued cert info from checks for the success banner.
+	var issuedCN string
+	var issuedExpiry time.Time
+	if r, ok := st.Results[wizard.StepInstall]; ok && r.Status == "passed" {
+		if cn, notAfter, err := NewSSHUnifi(cfg).RemoteCertInfo(ctx); err == nil {
+			issuedCN = cn
+			issuedExpiry = notAfter
+		}
+	}
+
+	svc.Wizard.Update(func(s *wizard.State) {
+		s.Results[wizard.StepVerify] = &wizard.StepResult{
+			StepNum:    wizard.StepVerify,
+			Status:     resultStatus(passed),
+			Checks:     checks,
+			FinishedAt: time.Now(),
+		}
+		if issuedCN != "" {
+			s.IssuedCertCN = issuedCN
+			s.IssuedCertExpiry = issuedExpiry
+			s.IssuedByLE = true
+		}
+		if passed {
+			s.CurrentStep = wizard.StepDone
+			s.CompletedAt = time.Now()
+		}
+	})
+
+	// On success, sync wizard config back to AppConfig so the dashboard works.
+	if passed {
+		svc.SyncConfigFromWizard()
+		go svc.RunCheckCycle(context.Background())
+	}
+
+	return svc.renderWizardBody(c)
+}
+
+// ---------------------------------------------------------------------------
+// Wizard: helpers
+// ---------------------------------------------------------------------------
+
+// buildSSHCfgFromWizard creates an AppConfig populated with wizard SSH settings.
+func (svc *Service) buildSSHCfgFromWizard(st wizard.State) AppConfig {
+	port := st.UDMPort
+	if port == 0 {
+		port = 22
+	}
+	user := st.SSHUser
+	if user == "" {
+		user = "root"
+	}
+	return AppConfig{
+		SSHHost:        st.UDMHost,
+		SSHPort:        port,
+		SSHUser:        user,
+		SSHKeyPath:     st.SSHKeyPath,
+		SSHKnownHosts:  st.SSHKnownHosts,
+		CertEmail:      st.CertEmail,
+		CertHosts:      st.CertHosts,
+		DNSProvider:    st.DNSProvider,
+		RemoteCertPath: "/data/unifi-core/config/unifi-core.crt",
+		CertDaysBeforeRenewal: 30,
+	}
+}
+
+func resultStatus(passed bool) string {
+	if passed {
+		return "passed"
+	}
+	return "failed"
 }

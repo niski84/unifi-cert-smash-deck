@@ -1,6 +1,7 @@
 package certdeck
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/x509"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/niski84/unifi-cert-smash-deck/internal/sshkey"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/knownhosts"
@@ -203,4 +205,216 @@ func (s *SSHUnifi) CheckUdmLeStatus(ctx context.Context) (installed bool, timerA
 	timerActive = strings.Contains(outs, "active") || strings.Contains(outs, "waiting")
 
 	return installed, timerActive, nil
+}
+
+// RunCommand opens a new SSH session, runs cmd, returns combined stdout+stderr.
+func (s *SSHUnifi) RunCommand(ctx context.Context, cmd string) (string, error) {
+	client, err := s.dial(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		return "", err
+	}
+	defer session.Close()
+
+	out, err := session.CombinedOutput(cmd)
+	return string(out), err
+}
+
+// WriteRemoteFile writes data to remotePath on the UDM via SFTP, creating parent directories as needed.
+func (s *SSHUnifi) WriteRemoteFile(ctx context.Context, remotePath string, data []byte, mode os.FileMode) error {
+	client, err := s.dial(ctx)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	sc, err := sftp.NewClient(client)
+	if err != nil {
+		return fmt.Errorf("sftp client: %w", err)
+	}
+	defer sc.Close()
+
+	dir := filepath.Dir(remotePath)
+	if dir != "" && dir != "." {
+		if mkErr := sc.MkdirAll(dir); mkErr != nil {
+			return fmt.Errorf("mkdir %s: %w", dir, mkErr)
+		}
+	}
+
+	f, err := sc.OpenFile(remotePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+	if err != nil {
+		return fmt.Errorf("open remote file %s: %w", remotePath, err)
+	}
+	defer f.Close()
+
+	if err := f.Chmod(mode); err != nil {
+		// Non-fatal on some platforms.
+		_ = err
+	}
+
+	if _, err := f.Write(data); err != nil {
+		return fmt.Errorf("write remote file %s: %w", remotePath, err)
+	}
+	return nil
+}
+
+// ReadRemoteFile reads a file from the UDM via SFTP and returns its contents.
+func (s *SSHUnifi) ReadRemoteFile(ctx context.Context, remotePath string) ([]byte, error) {
+	client, err := s.dial(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	sc, err := sftp.NewClient(client)
+	if err != nil {
+		return nil, fmt.Errorf("sftp client: %w", err)
+	}
+	defer sc.Close()
+
+	f, err := sc.Open(remotePath)
+	if err != nil {
+		return nil, fmt.Errorf("open remote file %s: %w", remotePath, err)
+	}
+	defer f.Close()
+
+	return io.ReadAll(f)
+}
+
+// ExecStream opens an SSH session for cmd, streams each output line to logCh, and waits for exit.
+func (s *SSHUnifi) ExecStream(ctx context.Context, cmd string, logCh chan<- string) error {
+	client, err := s.dial(ctx)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+
+	pr, pw := io.Pipe()
+	session.Stdout = pw
+	session.Stderr = pw
+
+	if err := session.Start(cmd); err != nil {
+		_ = pw.Close()
+		return fmt.Errorf("start command: %w", err)
+	}
+
+	// Scan lines in a goroutine; close the pipe when the session exits.
+	doneCh := make(chan struct{})
+	go func() {
+		scanner := bufio.NewScanner(pr)
+		for scanner.Scan() {
+			line := scanner.Text()
+			select {
+			case logCh <- line:
+			case <-ctx.Done():
+				return
+			}
+		}
+		close(doneCh)
+	}()
+
+	waitErr := session.Wait()
+	_ = pw.Close()
+	<-doneCh
+
+	return waitErr
+}
+
+// CheckInternet runs two connectivity probes from the UDM:
+//   - cfOK: whether Cloudflare (1.1.1.1) is reachable
+//   - leOK: whether Let's Encrypt ACME endpoint is reachable
+func (s *SSHUnifi) CheckInternet(ctx context.Context) (cfOK bool, leOK bool, err error) {
+	cfOut, cfErr := s.RunCommand(ctx, `curl -sf --connect-timeout 5 https://1.1.1.1 -o /dev/null && echo OK || echo FAIL`)
+	if cfErr != nil {
+		return false, false, fmt.Errorf("internet check (CF): %w", cfErr)
+	}
+	cfOK = strings.Contains(cfOut, "OK")
+
+	leOut, leErr := s.RunCommand(ctx, `curl -sf --connect-timeout 5 https://acme-v02.api.letsencrypt.org/directory -o /dev/null && echo OK || echo FAIL`)
+	if leErr != nil {
+		// Treat as reachability failure, not a fatal error.
+		leOK = false
+	} else {
+		leOK = strings.Contains(leOut, "OK")
+	}
+
+	return cfOK, leOK, nil
+}
+
+// DeployPublicKey appends pubKey to /root/.ssh/authorized_keys on the UDM via SFTP.
+// It creates /root/.ssh if it does not exist, and skips writing if the key is already present.
+func (s *SSHUnifi) DeployPublicKey(ctx context.Context, pubKey string) error {
+	client, err := s.dial(ctx)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	sc, err := sftp.NewClient(client)
+	if err != nil {
+		return fmt.Errorf("sftp client: %w", err)
+	}
+	defer sc.Close()
+
+	// Ensure /root/.ssh exists.
+	sshDir := "/root/.ssh"
+	if mkErr := sc.MkdirAll(sshDir); mkErr != nil {
+		return fmt.Errorf("mkdir %s: %w", sshDir, mkErr)
+	}
+	_ = sc.Chmod(sshDir, 0o700)
+
+	akPath := sshDir + "/authorized_keys"
+	var existing []byte
+	f, openErr := sc.Open(akPath)
+	if openErr == nil {
+		existing, _ = io.ReadAll(f)
+		f.Close()
+	}
+
+	pk := strings.TrimSpace(pubKey)
+	if strings.Contains(string(existing), pk) {
+		// Key already present.
+		return nil
+	}
+
+	var newContent bytes.Buffer
+	newContent.Write(existing)
+	if len(existing) > 0 && !bytes.HasSuffix(existing, []byte("\n")) {
+		newContent.WriteByte('\n')
+	}
+	newContent.WriteString(pk)
+	newContent.WriteByte('\n')
+
+	wf, err := sc.OpenFile(akPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+	if err != nil {
+		return fmt.Errorf("open authorized_keys for writing: %w", err)
+	}
+	defer wf.Close()
+	_ = wf.Chmod(0o600)
+
+	if _, err := wf.Write(newContent.Bytes()); err != nil {
+		return fmt.Errorf("write authorized_keys: %w", err)
+	}
+	return nil
+}
+
+// ScanAndSaveKnownHosts is a package-level function (does not require an established SSH connection).
+// It scans the host keys of host:port and writes them to savePath.
+func ScanAndSaveKnownHosts(host string, port int, savePath string) error {
+	keys, err := sshkey.ScanHostKeys(host, port)
+	if err != nil {
+		return fmt.Errorf("scan host keys: %w", err)
+	}
+	return sshkey.WriteKnownHostsFile(host, port, keys, savePath)
 }

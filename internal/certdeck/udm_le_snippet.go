@@ -47,6 +47,40 @@ func BuildUdmLeEnvSnippet(cfg AppConfig) string {
 	return b.String()
 }
 
+// BuildUdmLeEnvWithToken calls BuildUdmLeEnvSnippet and replaces provider-specific token
+// placeholders with the real token value.
+func BuildUdmLeEnvWithToken(cfg AppConfig, token string) string {
+	snippet := BuildUdmLeEnvSnippet(cfg)
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return snippet
+	}
+
+	prov := strings.ToLower(strings.TrimSpace(cfg.DNSProvider))
+	switch prov {
+	case "cloudflare":
+		snippet = strings.ReplaceAll(snippet,
+			`CLOUDFLARE_DNS_API_TOKEN="YOUR_CLOUDFLARE_API_TOKEN"`,
+			fmt.Sprintf(`CLOUDFLARE_DNS_API_TOKEN=%q`, token))
+	case "digitalocean":
+		snippet = strings.ReplaceAll(snippet, "DO_AUTH_TOKEN=", "DO_AUTH_TOKEN="+token)
+	case "duckdns":
+		snippet = strings.ReplaceAll(snippet,
+			`DUCKDNS_TOKEN="AUTH_TOKEN"`,
+			fmt.Sprintf(`DUCKDNS_TOKEN=%q`, token))
+	case "route53":
+		// Route53 uses key+secret; treat token as secret access key placeholder.
+		snippet = strings.ReplaceAll(snippet,
+			`AWS_SECRET_ACCESS_KEY=""`,
+			fmt.Sprintf(`AWS_SECRET_ACCESS_KEY=%q`, token))
+	case "linode":
+		snippet = strings.ReplaceAll(snippet,
+			`LINODE_TOKEN=""`,
+			fmt.Sprintf(`LINODE_TOKEN=%q`, token))
+	}
+	return snippet
+}
+
 func appendProviderBlock(b *strings.Builder, prov string) {
 	switch prov {
 	case "cloudflare":
