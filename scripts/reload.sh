@@ -17,6 +17,14 @@ echo "=== UniFi Cert Smash Deck reload ==="
 echo "→ Stopping existing process..."
 pkill -f "$BINARY" 2>/dev/null && sleep 1 || echo "  (none running)"
 
+# ── vault: pull fresh secrets from Infisical before sourcing .env ─────────────
+_VAULT_SYNC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../infrastructure && pwd)/sync-secrets.sh"
+if [[ -f "$_VAULT_SYNC" ]] && [[ -n "${INFISICAL_CLIENT_ID:-}" ]]; then
+  echo "→ Pulling secrets from vault (unifi-cert-smash-deck)..."
+  "$_VAULT_SYNC" --pull unifi-cert-smash-deck 2>/dev/null || echo "  ⚠  Vault pull skipped (using cached .env)"
+fi
+# ─────────────────────────────────────────────────────────────────────────────
+
 if [ -f "$PROJECT_DIR/.env" ]; then
 	set -a
 	# shellcheck disable=SC1090

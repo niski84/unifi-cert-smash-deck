@@ -10,13 +10,12 @@ import (
 
 // Step constants
 const (
-	StepDiscover  = 0
-	StepSSH       = 1
-	StepDomain    = 2
-	StepPreflight = 3
-	StepInstall   = 4
-	StepVerify    = 5
-	StepDone      = 6
+	StepConnect   = 0 // merged discover + SSH
+	StepDomain    = 1
+	StepPreflight = 2
+	StepInstall   = 3
+	StepVerify    = 4
+	StepDone      = 5
 )
 
 // CheckStatus describes the result of an individual check.
@@ -120,7 +119,7 @@ type State struct {
 // NewState returns a State initialised with sensible defaults.
 func NewState() State {
 	return State{
-		Version:    1,
+		Version:    2,
 		UDMPort:    22,
 		SSHUser:    "root",
 		UDMLeState: UDMLeUnknown,
@@ -169,6 +168,12 @@ func NewStore(dataDir string) *Store {
 		if json.Unmarshal(raw, &loaded) == nil {
 			if loaded.Results == nil {
 				loaded.Results = make(map[int]*StepResult)
+			}
+			if loaded.Version < 2 {
+				// Step numbering changed in v2 — reset wizard progress.
+				fresh := NewState()
+				st.state = &fresh
+				return st
 			}
 			st.state = &loaded
 			return st

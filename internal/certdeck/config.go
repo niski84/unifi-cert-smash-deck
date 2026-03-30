@@ -23,7 +23,7 @@ type AppConfig struct {
 	SSHHost        string `json:"ssh_host"`
 	SSHPort        int    `json:"ssh_port"`
 	SSHUser        string `json:"ssh_user"`
-	SSHPassword    string `json:"ssh_password,omitempty"`
+	SSHPassword    string `json:"-"`
 	SSHKeyPath     string `json:"ssh_key_path"`
 	SSHKnownHosts  string `json:"ssh_known_hosts"`
 	RemoteCertPath string `json:"remote_cert_path"`
@@ -150,9 +150,7 @@ func mergeAppConfig(dst *AppConfig, src AppConfig) {
 	if src.SSHUser != "" {
 		dst.SSHUser = src.SSHUser
 	}
-	if src.SSHPassword != "" {
-		dst.SSHPassword = src.SSHPassword
-	}
+	// SSHPassword is not persisted to JSON (json:"-"); kept in-memory from .env only.
 	if src.SSHKeyPath != "" {
 		dst.SSHKeyPath = src.SSHKeyPath
 	}

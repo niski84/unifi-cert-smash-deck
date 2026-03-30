@@ -91,7 +91,22 @@ func allRequired(checks []wizard.Check) bool {
 }
 
 // ---------------------------------------------------------------------------
-// Step 0: Discover
+// Step 0: Connect (merged Discover + SSH)
+// ---------------------------------------------------------------------------
+
+// WizConnect is the merged "Connect" step: runs WizDiscover first, then WizSSH.
+// If any required Discover check fails, SSH checks are skipped.
+func WizConnect(ctx context.Context, host string, port int, user, password, existingKeyPath, dataDir string) ([]wizard.Check, SSHConnResult) {
+	discoverChecks := WizDiscover(ctx, host, port)
+	if !allRequired(discoverChecks) {
+		return discoverChecks, SSHConnResult{}
+	}
+	sshChecks, result := WizSSH(ctx, host, port, user, password, existingKeyPath, dataDir)
+	return append(discoverChecks, sshChecks...), result
+}
+
+// ---------------------------------------------------------------------------
+// Discover (internal — used by WizConnect)
 // ---------------------------------------------------------------------------
 
 // WizDiscover validates connectivity to the UDM host.

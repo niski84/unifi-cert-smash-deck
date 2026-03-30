@@ -15,6 +15,10 @@ type RuntimeState struct {
 	LastCheckAt       time.Time `json:"last_check_at"`
 	LastError         string    `json:"last_error,omitempty"`
 	LastActiveClients int       `json:"last_active_clients"`
+
+	// Cached from the last scheduler cycle — avoids a live SSH call on every page render.
+	UdmLeInstalled bool `json:"udm_le_installed"`
+	UdmLeActive    bool `json:"udm_le_active"`
 }
 
 type StateStore struct {

@@ -93,14 +93,14 @@ templ StatusFragment(vm StatusVM) {
 			templ.KV("border-zinc-400/50 shadow-none", !vm.SSHConfigured),
 			templ.KV("border-rose-500/80 shadow-[0_0_36px_rgba(244,63,94,0.3)]", vm.SSHConfigured && (vm.LastError != "" || (vm.RemoteCertKnown && !vm.Healthy))) }
 		>
-			<div class="absolute inset-6 rounded-full bg-zinc-200/90 ring-1 ring-zinc-400/20 dark:bg-zinc-900/90 dark:ring-white/5"></div>
-			<div class="relative z-10 px-4 text-center">
+			<div class="pointer-events-none absolute inset-6 rounded-full bg-zinc-200/90 ring-1 ring-zinc-400/20 dark:bg-zinc-900/90 dark:ring-white/5"></div>
+			<div class="relative z-10 px-4 text-center select-text">
 				if !vm.SSHConfigured {
 					<p class="font-mono text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-500">Status</p>
 					<p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">SSH optional — set host to read cert expiry</p>
 				} else if vm.LastError != "" {
 					<p class="font-mono text-xs uppercase tracking-widest text-rose-300/90">Error</p>
-					<p class="mt-2 text-sm text-zinc-400">See message below</p>
+					<p class="mt-2 text-sm text-zinc-400">See details below</p>
 				} else if !vm.RemoteCertKnown {
 					<p class="font-mono text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-500">Waiting</p>
 					<p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">First check pending…</p>
@@ -115,13 +115,16 @@ templ StatusFragment(vm StatusVM) {
 				}
 			</div>
 		</div>
-		<div class="max-w-md space-y-1 text-center text-sm text-zinc-600 dark:text-zinc-400">
+		<div class="max-w-md space-y-1 text-center text-sm text-zinc-600 dark:text-zinc-400 select-text">
 			<p><span class="text-zinc-500 dark:text-zinc-500">Common name</span> · <span class="font-mono text-zinc-800 dark:text-zinc-200">{ vm.CommonName }</span></p>
 			<p><span class="text-zinc-500">Last check</span> · { vm.LastCheckRel }</p>
-			if vm.LastError != "" {
-				<p class="pt-2 font-mono text-xs text-rose-300/90">{ vm.LastError }</p>
-			}
 		</div>
+		if vm.LastError != "" {
+			<div class="mt-4 w-full max-w-md rounded-lg border border-rose-300/60 bg-rose-50/80 px-4 py-3 text-left dark:border-rose-500/30 dark:bg-rose-950/40">
+				<p class="mb-1 text-xs font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">Error</p>
+				<p class="select-text break-all font-mono text-xs leading-relaxed text-rose-800 dark:text-rose-200">{ vm.LastError }</p>
+			</div>
+		}
 	</div>
 	</div>
 }
@@ -215,7 +218,7 @@ templ SettingsPanel(vm SettingsVM) {
 				<input name="ssh_user" type="text" value={ vm.SSHUser } class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<label class="block space-y-1">
-				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH password (leave blank to keep current)</span>
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH password <span class="text-zinc-400">(not saved to disk — use .env for persistence)</span></span>
 				<input name="ssh_password" type="password" value={ vm.SSHPassword } placeholder="(set in .env or enter here)" autocomplete="off" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-500/50"/>
 			</label>
 			<p class="md:col-span-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
@@ -475,7 +478,7 @@ templ DashboardBody(status StatusVM, settings SettingsVM) {
 					>
 						<pre
 							x-ref="panel"
-							class="max-h-72 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-4 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90"
+							class="select-text max-h-72 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-4 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90"
 							x-text="lines.join('\n')"
 						></pre>
 					</div>

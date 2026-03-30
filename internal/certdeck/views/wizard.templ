@@ -3,15 +3,20 @@ package views
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"github.com/niski84/unifi-cert-smash-deck/internal/wizard"
 )
 
 // WizardVM is the view model for the wizard page.
 type WizardVM struct {
-	State          wizard.State
-	StepStatus     [6]string // "locked" | "active" | "passed" | "failed" | "running"
-	InstallRunning bool
-	InstallError   string
+	State            wizard.State
+	StepStatus       [5]string // "locked" | "active" | "passed" | "failed" | "running"
+	InstallRunning   bool
+	InstallError     string
+	TokenNeeded      bool
+	DNSTokenFromEnv  bool   // true when a provider token was found in env vars
+	SSHPasswordMasked string // masked preview of SSH password loaded from .env
+	DNSTokenMasked    string // masked preview of DNS token loaded from env vars
 }
 
 templ WizardPage(vm WizardVM) {
@@ -32,7 +37,7 @@ templ wizardContent(vm WizardVM) {
 			<div>
 				<p class="font-mono text-xs uppercase tracking-[0.2em] text-emerald-600/90 dark:text-emerald-500/80">Smash Deck</p>
 				<h1 class="mt-1 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white">UniFi Certificate Setup</h1>
-				<p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Walk through once — certificates renew automatically after.</p>
+				<p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Replace the browser security warning on your UniFi gateway. Run once — certificates renew automatically.</p>
 			</div>
 			<div class="flex items-center gap-3">
 				<button
@@ -45,6 +50,9 @@ templ wizardContent(vm WizardVM) {
 				<a href="/" class="rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:border-white/15 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800">Dashboard</a>
 			</div>
 		</header>
+
+		<!-- Prerequisites card -->
+		@prereqCard()
 
 		<!-- Progress bar -->
 		@progressBar(vm)
@@ -61,8 +69,7 @@ templ wizardContent(vm WizardVM) {
 
 		<!-- Step cards -->
 		<div class="space-y-4">
-			@stepDiscover(vm)
-			@stepSSH(vm)
+			@stepConnect(vm)
 			@stepDomain(vm)
 			@stepPreflight(vm)
 			@stepInstall(vm)
@@ -84,14 +91,88 @@ templ wizardContent(vm WizardVM) {
 }
 
 // ---------------------------------------------------------------------------
+// Prerequisites card
+// ---------------------------------------------------------------------------
+
+templ prereqCard() {
+	<div
+		x-data="{ open: localStorage.getItem('cert-prereq-closed') !== '1' }"
+		class="mb-8 overflow-hidden rounded-xl border border-zinc-200/80 bg-white/60 dark:border-white/10 dark:bg-zinc-900/30"
+	>
+		<button
+			type="button"
+			class="flex w-full items-center justify-between px-5 py-3.5 text-left transition-colors hover:bg-zinc-50/80 dark:hover:bg-zinc-800/30"
+			@click="open = !open; if (!open) localStorage.setItem('cert-prereq-closed', '1')"
+		>
+			<span class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">What you need before starting</span>
+			<span
+				class="ml-4 shrink-0 rounded border border-zinc-200 px-2 py-0.5 text-[10px] font-medium text-zinc-500 dark:border-white/10 dark:text-zinc-500"
+				x-text="open ? 'Hide ▲' : 'Show ▼'"
+			></span>
+		</button>
+		<div x-show="open" class="border-t border-zinc-200/80 px-5 py-4 dark:border-white/10">
+			<ol class="space-y-4 text-sm">
+				<li class="flex gap-3">
+					<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">1</span>
+					<div>
+						<strong class="text-zinc-800 dark:text-zinc-200">A domain name with DNS managed by a supported provider</strong>
+						<p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+							Cloudflare, Route53, DigitalOcean, DuckDNS, Azure, Google Cloud, or Linode.
+							Create an A record for your chosen hostname — e.g. <span class="font-mono">unifi.yourdomain.com</span> — pointing to your UDM&#39;s LAN IP (<span class="font-mono">192.168.1.1</span> or whatever it is).
+							<strong class="text-zinc-700 dark:text-zinc-300">No public IP or port forwarding needed.</strong>
+							Let&#39;s Encrypt proves ownership via a temporary DNS TXT record, not web traffic.
+						</p>
+					</div>
+				</li>
+				<li class="flex gap-3">
+					<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">2</span>
+					<div>
+						<strong class="text-zinc-800 dark:text-zinc-200">A DNS API token with "Edit zone DNS" permission</strong>
+						<p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+							<strong class="text-zinc-700 dark:text-zinc-300">Cloudflare:</strong> <span class="font-mono">dash.cloudflare.com → My Profile → API Tokens → Create Token → Edit zone DNS</span>.<br/>
+							For other providers, create a key or token that can create and delete TXT records on your zone.
+							The wizard writes this to the UDM — it is never stored on this machine.
+						</p>
+					</div>
+				</li>
+				<li class="flex gap-3">
+					<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">3</span>
+					<div>
+						<strong class="text-zinc-800 dark:text-zinc-200">SSH enabled on your UDM with its local password</strong>
+						<p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+							In the UniFi console: <span class="font-mono">Settings → System → Advanced → SSH → Enable</span>. Note the SSH password shown there.
+							<strong class="text-zinc-700 dark:text-zinc-300">This is not your Ubiquiti cloud account password.</strong>
+							It is a separate local credential set in that screen.
+							The wizard generates an SSH key and deploys it — the password is only used this one time.
+						</p>
+					</div>
+				</li>
+				<li class="flex gap-3">
+					<span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">4</span>
+					<div>
+						<strong class="text-zinc-800 dark:text-zinc-200">An email address</strong>
+						<p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+							Let&#39;s Encrypt uses this only to send certificate expiry warnings. Not shared elsewhere.
+						</p>
+					</div>
+				</li>
+			</ol>
+			<p class="mt-5 rounded-lg border border-emerald-200/70 bg-emerald-50/60 px-4 py-2.5 text-xs leading-relaxed text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-900/15 dark:text-emerald-300">
+				That&#39;s everything. The wizard handles SSH key generation, installing <span class="font-mono">udm-le</span> on your gateway, issuing the certificate, and configuring automatic 90-day renewal.
+			</p>
+		</div>
+	</div>
+}
+
+// ---------------------------------------------------------------------------
 // Progress bar
 // ---------------------------------------------------------------------------
 
 templ progressBar(vm WizardVM) {
 	<div class="mb-8 flex items-center">
-		for i := 0; i < 6; i++ {
+		for i := 0; i < 5; i++ {
 			@progressStep(i, stepTitle(i), vm.StepStatus[i])
-			if i < 5 {
+			if i < 4 {
 				<div class={ "h-px flex-1 transition-colors", progressLineClass(vm.StepStatus[i]) }></div>
 			}
 		}
@@ -150,8 +231,8 @@ func progressLineClass(status string) string {
 }
 
 func stepTitle(n int) string {
-	titles := [6]string{"Discover", "SSH", "Domain", "Preflight", "Install", "Verify"}
-	if n >= 0 && n < 6 {
+	titles := [5]string{"Connect", "Domain", "Preflight", "Install", "Verify"}
+	if n >= 0 && n < 5 {
 		return titles[n]
 	}
 	return ""
@@ -246,14 +327,14 @@ templ checksPanel(checks []wizard.Check) {
 }
 
 templ checkItem(c wizard.Check) {
-	<div class="flex items-start gap-2.5 text-xs">
+	<div class="flex items-start gap-2.5 text-xs select-text">
 		<span class={ "mt-px shrink-0 font-mono text-sm leading-none", checkIconClass(c.Status) }>
 			{ checkIcon(c.Status) }
 		</span>
 		<div class="min-w-0">
 			<span class={ checkLabelClass(c.Status) }>{ c.Label }</span>
 			if c.Detail != "" {
-				<span class="ml-1 text-zinc-500 dark:text-zinc-500">— { c.Detail }</span>
+				<span class="ml-1 break-all text-zinc-500 dark:text-zinc-500">— { c.Detail }</span>
 			}
 		</div>
 	</div>
@@ -305,17 +386,19 @@ func checkLabelClass(s wizard.CheckStatus) string {
 }
 
 // ---------------------------------------------------------------------------
-// Step 0 — Discover
+// Step 0 — Connect (merged Discover + SSH)
 // ---------------------------------------------------------------------------
 
-templ stepDiscover(vm WizardVM) {
-	@stepCard(0, "Discover UDM", vm.StepStatus[0], stepDiscoverBody(vm))
+templ stepConnect(vm WizardVM) {
+	@stepCard(0, "Connect", vm.StepStatus[0], stepConnectBody(vm))
 }
 
-templ stepDiscoverBody(vm WizardVM) {
+templ stepConnectBody(vm WizardVM) {
 	<p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-		Enter the <strong class="text-zinc-800 dark:text-zinc-200">LAN IP address</strong> of your UniFi gateway (UDM Pro, Dream Machine, etc.).
-		Use the IP shown in the UniFi console — not a URL.
+		Enter the <strong class="text-zinc-800 dark:text-zinc-200">LAN IP address</strong> of your UniFi gateway and its SSH credentials.
+		The SSH user is <span class="font-mono text-zinc-700 dark:text-zinc-300">root</span> with the password set under
+		<strong class="text-zinc-800 dark:text-zinc-200">Enable SSH</strong> in the UniFi console — not your Ubiquiti cloud login.
+		The app generates an SSH key and deploys it so the password is only needed once.
 	</p>
 	<form
 		hx-post="/api/wizard/step/0"
@@ -324,29 +407,54 @@ templ stepDiscoverBody(vm WizardVM) {
 		hx-indicator="#step0-loading"
 		class="space-y-3"
 	>
-		<label class="block space-y-1">
-			<span class="text-xs text-zinc-600 dark:text-zinc-500">UDM LAN IP address</span>
-			<input
-				name="udm_host"
-				type="text"
-				value={ vm.State.UDMHost }
-				placeholder="192.168.1.1"
-				class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white"
-				autofocus?={ vm.StepStatus[0] == "active" }
-			/>
-		</label>
-		<label class="block space-y-1">
-			<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH port</span>
-			<input
-				name="udm_port"
-				type="number"
-				value={ strconv.Itoa(udmPortOrDefault(vm.State.UDMPort)) }
-				class="w-32 rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white"
-			/>
-		</label>
+		<div class="grid gap-3 sm:grid-cols-2">
+			<label class="block space-y-1 sm:col-span-2">
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">UDM LAN IP address</span>
+				<input
+					name="udm_host"
+					type="text"
+					value={ vm.State.UDMHost }
+					placeholder="192.168.1.1"
+					class={ wizInput }
+					autofocus?={ vm.StepStatus[0] == "active" }
+				/>
+			</label>
+			<label class="block space-y-1">
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH port</span>
+				<input name="udm_port" type="number" value={ strconv.Itoa(udmPortOrDefault(vm.State.UDMPort)) } class={ wizInput }/>
+			</label>
+			<label class="block space-y-1">
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH user</span>
+				<input name="ssh_user" type="text" value={ nonEmptyStr(vm.State.SSHUser, "root") } class={ wizInput }/>
+			</label>
+			<label class="block space-y-1 sm:col-span-2">
+				<span class="text-xs text-zinc-600 dark:text-zinc-500">
+					SSH password
+					if vm.SSHPasswordMasked != "" {
+						<span class="ml-1.5 rounded bg-emerald-100/80 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">synced from .env</span>
+					}
+				</span>
+				<input
+					name="ssh_password"
+					type="password"
+					value={ vm.SSHPasswordMasked }
+					placeholder="console SSH password"
+					autocomplete="off"
+					class={ wizInput }
+				/>
+			</label>
+		</div>
+		if vm.State.SSHKeyPath != "" {
+			<p class="text-xs text-zinc-500 dark:text-zinc-500">
+				Key path: <span class="font-mono">{ vm.State.SSHKeyPath }</span>
+				if vm.State.KeyGenerated {
+					<span class="ml-1 rounded bg-emerald-100 px-1 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">generated</span>
+				}
+			</p>
+		}
 		<div class="flex items-center gap-3">
-			<button type="submit" class={ wizBtnPrimary }>Check Connection</button>
-			<span id="step0-loading" class="htmx-indicator text-xs text-zinc-500">Checking…</span>
+			<button type="submit" class={ wizBtnPrimary }>Connect &amp; Setup SSH</button>
+			<span id="step0-loading" class="htmx-indicator text-xs text-zinc-500">Connecting…</span>
 		</div>
 	</form>
 	if checks := stepChecks(vm, 0); len(checks) > 0 {
@@ -361,75 +469,33 @@ func udmPortOrDefault(p int) int {
 	return p
 }
 
-// ---------------------------------------------------------------------------
-// Step 1 — SSH
-// ---------------------------------------------------------------------------
-
-templ stepSSH(vm WizardVM) {
-	@stepCard(1, "SSH Authentication", vm.StepStatus[1], stepSSHBody(vm))
+func nonEmptyStr(s, def string) string {
+	if strings.TrimSpace(s) == "" {
+		return def
+	}
+	return s
 }
 
-templ stepSSHBody(vm WizardVM) {
+// ---------------------------------------------------------------------------
+// Step 1 — Domain & DNS
+// ---------------------------------------------------------------------------
+
+templ stepDomain(vm WizardVM) {
+	@stepCard(1, "Domain &amp; DNS", vm.StepStatus[1], stepDomainBody(vm))
+}
+
+templ stepDomainBody(vm WizardVM) {
 	<p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-		Enter the SSH password for your UDM.
-		The SSH user on UniFi OS is <span class="font-mono text-zinc-700 dark:text-zinc-300">root</span> with the password you set
-		when you enabled SSH in the UniFi console — <strong class="text-zinc-800 dark:text-zinc-200">not</strong> your Ubiquiti cloud login.
-		The app will generate an SSH key and deploy it so the password is only needed once.
+		Enter the <strong class="text-zinc-800 dark:text-zinc-200">fully-qualified hostname</strong> you want on the certificate — e.g. <span class="font-mono text-zinc-700 dark:text-zinc-300">unifi.yourdomain.com</span>.
+		It can point to your LAN IP and does not need to be publicly accessible.
+		Let&#39;s Encrypt proves you own it by creating a temporary <span class="font-mono text-zinc-700 dark:text-zinc-300">_acme-challenge</span> TXT record via your DNS provider&#39;s API — no web server or open port needed.
+		The DNS token is written to the UDM and never stored here.
 	</p>
 	<form
 		hx-post="/api/wizard/step/1"
 		hx-target="#wizard-content"
 		hx-swap="innerHTML"
 		hx-indicator="#step1-loading"
-		class="space-y-3"
-	>
-		<div class="grid gap-3 sm:grid-cols-2">
-			<label class="block space-y-1">
-				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH user</span>
-				<input name="ssh_user" type="text" value={ vm.State.SSHUser } class={ wizInput }/>
-			</label>
-			<label class="block space-y-1">
-				<span class="text-xs text-zinc-600 dark:text-zinc-500">SSH password</span>
-				<input name="ssh_password" type="password" placeholder="console SSH password" autocomplete="off" class={ wizInput }/>
-			</label>
-		</div>
-		if vm.State.SSHKeyPath != "" {
-			<p class="text-xs text-zinc-500 dark:text-zinc-500">
-				Key path: <span class="font-mono">{ vm.State.SSHKeyPath }</span>
-				if vm.State.KeyGenerated {
-					<span class="ml-1 rounded bg-emerald-100 px-1 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">generated</span>
-				}
-			</p>
-		}
-		<div class="flex items-center gap-3">
-			<button type="submit" class={ wizBtnPrimary }>Connect &amp; Setup SSH</button>
-			<span id="step1-loading" class="htmx-indicator text-xs text-zinc-500">Connecting…</span>
-		</div>
-	</form>
-	if checks := stepChecks(vm, 1); len(checks) > 0 {
-		@checksPanel(checks)
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Step 2 — Domain & DNS
-// ---------------------------------------------------------------------------
-
-templ stepDomain(vm WizardVM) {
-	@stepCard(2, "Domain &amp; DNS", vm.StepStatus[2], stepDomainBody(vm))
-}
-
-templ stepDomainBody(vm WizardVM) {
-	<p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-		The certificate hostname must be a domain you control with DNS hosted at a supported provider.
-		The DNS token is used <strong class="text-zinc-800 dark:text-zinc-200">once</strong> to verify you own the domain —
-		it is written directly to the UDM and never stored on this machine.
-	</p>
-	<form
-		hx-post="/api/wizard/step/2"
-		hx-target="#wizard-content"
-		hx-swap="innerHTML"
-		hx-indicator="#step2-loading"
 		class="space-y-3"
 	>
 		<label class="block space-y-1 sm:col-span-2">
@@ -454,69 +520,94 @@ templ stepDomainBody(vm WizardVM) {
 			</select>
 		</label>
 		<label class="block space-y-1">
-			<span class="text-xs text-zinc-600 dark:text-zinc-500">DNS API token <span class="text-zinc-400">(not stored — written to UDM only)</span></span>
-			<input name="dns_token" type="password" placeholder="paste token here" autocomplete="off" class={ wizInput }/>
+			<span class="text-xs text-zinc-600 dark:text-zinc-500">
+				DNS API token <span class="text-zinc-400">(not stored — written to UDM only)</span>
+				if vm.DNSTokenMasked != "" {
+					<span class="ml-1.5 rounded bg-emerald-100/80 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">synced from .env</span>
+				}
+			</span>
+			<input
+				name="dns_token"
+				type="password"
+				value={ vm.DNSTokenMasked }
+				placeholder="paste token here"
+				autocomplete="off"
+				class={ wizInput }
+			/>
 		</label>
 		<div class="flex items-center gap-3">
 			<button type="submit" class={ wizBtnPrimary }>Validate</button>
-			<span id="step2-loading" class="htmx-indicator text-xs text-zinc-500">Validating…</span>
+			<span id="step1-loading" class="htmx-indicator text-xs text-zinc-500">Validating…</span>
 		</div>
 	</form>
-	if checks := stepChecks(vm, 2); len(checks) > 0 {
+	if checks := stepChecks(vm, 1); len(checks) > 0 {
 		@checksPanel(checks)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Step 3 — Preflight
+// Step 2 — Preflight
 // ---------------------------------------------------------------------------
 
 templ stepPreflight(vm WizardVM) {
-	@stepCard(3, "Pre-flight Checks", vm.StepStatus[3], stepPreflightBody(vm))
+	@stepCard(2, "Pre-flight Checks", vm.StepStatus[2], stepPreflightBody(vm))
 }
 
 templ stepPreflightBody(vm WizardVM) {
 	<p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-		Verifies the UDM can reach the internet (required for DNS-01 challenge and Let's Encrypt),
-		and determines exactly what the install step will do based on your UDM's current state.
+		Verifies the UDM can reach the internet and determines exactly what the install step will do.
 	</p>
-	<form
-		hx-post="/api/wizard/step/3"
-		hx-target="#wizard-content"
-		hx-swap="innerHTML"
-		hx-indicator="#step3-loading"
-		class="space-y-3"
-	>
-		<label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-			<input name="staging_mode" type="checkbox" value="true" checked?={ vm.State.StagingMode }
-				class="rounded border-zinc-400 bg-white dark:border-white/20 dark:bg-zinc-950"/>
-			Use Let's Encrypt <strong class="mx-0.5">staging</strong> environment
-			<span class="text-xs text-zinc-500">(recommended on first run — avoids rate limits)</span>
-		</label>
-		<div class="flex items-center gap-3">
-			<button type="submit" class={ wizBtnPrimary }>Run Pre-flight</button>
-			<span id="step3-loading" class="htmx-indicator text-xs text-zinc-500">Checking…</span>
+	if vm.StepStatus[2] == "active" {
+		<div
+			hx-post="/api/wizard/step/2"
+			hx-trigger="load"
+			hx-target="#wizard-content"
+			hx-swap="innerHTML"
+			hx-vals={ fmt.Sprintf(`{"staging_mode":"%v"}`, vm.State.StagingMode) }
+		></div>
+		<div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+			<span class="animate-spin font-mono">⟳</span>
+			<span>Running preflight checks…</span>
 		</div>
-	</form>
-	if vm.State.InstallAction != "" {
-		<div class="mt-3 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-2 text-xs text-zinc-600 dark:border-white/10 dark:bg-zinc-950/40 dark:text-zinc-400">
-			<strong class="text-zinc-800 dark:text-zinc-200">Planned action:</strong> { string(vm.State.InstallAction) }
-			if vm.State.StagingMode {
-				<span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">staging</span>
-			}
-		</div>
-	}
-	if checks := stepChecks(vm, 3); len(checks) > 0 {
-		@checksPanel(checks)
+	} else {
+		if vm.State.InstallAction != "" {
+			<div class="mb-4 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-2 text-xs text-zinc-600 dark:border-white/10 dark:bg-zinc-950/40 dark:text-zinc-400">
+				<strong class="text-zinc-800 dark:text-zinc-200">Planned action:</strong> { string(vm.State.InstallAction) }
+				if vm.State.StagingMode {
+					<span class="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">staging</span>
+				}
+			</div>
+		}
+		<form
+			hx-post="/api/wizard/step/2"
+			hx-target="#wizard-content"
+			hx-swap="innerHTML"
+			hx-indicator="#step2-loading"
+			class="space-y-3"
+		>
+			<label class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+				<input name="staging_mode" type="checkbox" value="true" checked?={ vm.State.StagingMode }
+					class="rounded border-zinc-400 bg-white dark:border-white/20 dark:bg-zinc-950"/>
+				Use Let's Encrypt <strong class="mx-0.5">staging</strong> environment
+				<span class="text-xs text-zinc-500">(avoids rate limits)</span>
+			</label>
+			<div class="flex items-center gap-3">
+				<button type="submit" class={ wizBtnPrimary }>Re-run Pre-flight</button>
+				<span id="step2-loading" class="htmx-indicator text-xs text-zinc-500">Checking…</span>
+			</div>
+		</form>
+		if checks := stepChecks(vm, 2); len(checks) > 0 {
+			@checksPanel(checks)
+		}
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Step 4 — Install
+// Step 3 — Install
 // ---------------------------------------------------------------------------
 
 templ stepInstall(vm WizardVM) {
-	@stepCard(4, "Install &amp; Issue Certificate", vm.StepStatus[4], stepInstallBody(vm))
+	@stepCard(3, "Install &amp; Issue Certificate", vm.StepStatus[3], stepInstallBody(vm))
 }
 
 templ stepInstallBody(vm WizardVM) {
@@ -529,6 +620,17 @@ templ stepInstallBody(vm WizardVM) {
 			<p class="text-xs text-zinc-500 dark:text-zinc-500">This takes 1–3 minutes. The page updates automatically.</p>
 		</div>
 	} else {
+		if vm.TokenNeeded {
+			<div class="mb-4 rounded-lg border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-500/25 dark:bg-amber-900/10">
+				<p class="mb-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">Session expired — re-enter your DNS token to continue.</p>
+				<p class="mb-3 text-xs text-zinc-500 dark:text-zinc-400">The DNS token is only held in memory and was lost when the server restarted.</p>
+				<form hx-post="/api/wizard/step/3/token" hx-target="#wizard-content" hx-swap="innerHTML" class="flex flex-wrap gap-2">
+					<input name="dns_token" type="password" placeholder="Paste DNS token" autocomplete="off"
+						class="flex-1 min-w-[14rem] rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 focus:border-emerald-500/60 focus:outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-white"/>
+					<button type="submit" class={ wizBtnPrimary }>Resume Install</button>
+				</form>
+			</div>
+		}
 		<p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
 			The app will SSH into your UDM, write the configuration (including your DNS token),
 			and run <span class="font-mono text-zinc-700 dark:text-zinc-300">udm-le.sh initial</span> to issue the certificate.
@@ -548,24 +650,26 @@ templ stepInstallBody(vm WizardVM) {
 				{ vm.InstallError }
 			</div>
 		}
-		<form
-			hx-post="/api/wizard/step/4/start"
-			hx-target="#wizard-content"
-			hx-swap="innerHTML"
-			hx-indicator="#step4-loading"
-		>
-			<div class="flex items-center gap-3">
-				<button
-					type="submit"
-					class={ wizBtnInstall }
-					hx-confirm="This will SSH into your UDM and run the install. Continue?"
-				>
-					{ installActionLabel(vm.State.InstallAction) }
-				</button>
-				<span id="step4-loading" class="htmx-indicator text-xs text-zinc-500">Starting…</span>
-			</div>
-		</form>
-		if checks := stepChecks(vm, 4); len(checks) > 0 {
+		if !vm.TokenNeeded {
+			<form
+				hx-post="/api/wizard/step/3/start"
+				hx-target="#wizard-content"
+				hx-swap="innerHTML"
+				hx-indicator="#step3-loading"
+			>
+				<div class="flex items-center gap-3">
+					<button
+						type="submit"
+						class={ wizBtnInstall }
+						hx-confirm="This will SSH into your UDM and run the install. Continue?"
+					>
+						{ installActionLabel(vm.State.InstallAction) }
+					</button>
+					<span id="step3-loading" class="htmx-indicator text-xs text-zinc-500">Starting…</span>
+				</div>
+			</form>
+		}
+		if checks := stepChecks(vm, 3); len(checks) > 0 {
 			@checksPanel(checks)
 		}
 	}
@@ -589,15 +693,15 @@ func installActionLabel(a wizard.InstallAction) string {
 }
 
 // ---------------------------------------------------------------------------
-// Step 5 — Verify
+// Step 4 — Verify
 // ---------------------------------------------------------------------------
 
 templ stepVerify(vm WizardVM) {
-	@stepCard(5, "Verify", vm.StepStatus[5], stepVerifyBody(vm))
+	@stepCard(4, "Verify", vm.StepStatus[4], stepVerifyBody(vm))
 }
 
 templ stepVerifyBody(vm WizardVM) {
-	if vm.StepStatus[5] == "passed" {
+	if vm.StepStatus[4] == "passed" {
 		<div class="space-y-3">
 			<div class="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 dark:border-emerald-500/20 dark:bg-emerald-900/15">
 				<p class="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Setup complete!</p>
@@ -616,24 +720,24 @@ templ stepVerifyBody(vm WizardVM) {
 				Go to Dashboard →
 			</a>
 		</div>
-		@checksPanel(stepChecks(vm, 5))
+		@checksPanel(stepChecks(vm, 4))
 	} else {
 		<p class="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
 			Confirms the certificate was issued by Let's Encrypt, the CN matches your hostname,
 			and the renewal timer is active.
 		</p>
 		<form
-			hx-post="/api/wizard/step/5"
+			hx-post="/api/wizard/step/4"
 			hx-target="#wizard-content"
 			hx-swap="innerHTML"
-			hx-indicator="#step5-loading"
+			hx-indicator="#step4-loading"
 		>
 			<div class="flex items-center gap-3">
 				<button type="submit" class={ wizBtnPrimary }>Verify Certificate</button>
-				<span id="step5-loading" class="htmx-indicator text-xs text-zinc-500">Checking…</span>
+				<span id="step4-loading" class="htmx-indicator text-xs text-zinc-500">Checking…</span>
 			</div>
 		</form>
-		if checks := stepChecks(vm, 5); len(checks) > 0 {
+		if checks := stepChecks(vm, 4); len(checks) > 0 {
 			@checksPanel(checks)
 		}
 	}
@@ -649,7 +753,7 @@ templ wizardLog() {
 		<div x-data="certLog()" x-init="connect()">
 			<pre
 				x-ref="panel"
-				class="max-h-64 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-3 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90"
+				class="select-text max-h-64 overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-100 p-3 font-mono text-xs leading-relaxed text-emerald-900 whitespace-pre-wrap dark:border-white/5 dark:bg-black/50 dark:text-emerald-100/90"
 				x-text="lines.join('\n')"
 			></pre>
 		</div>

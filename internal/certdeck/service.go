@@ -74,8 +74,41 @@ func NewService(settingsPath string) *Service {
 		Wizard:       wizard.NewStore(DataDir()),
 		wizSession:   &wizardSession{},
 	}
+	s.seedWizardFromConfig()
 	s.log.Info("UniFi Cert Smash Deck started — setup wizard active (see /wizard).")
 	return s
+}
+
+// seedWizardFromConfig pre-populates empty wizard fields from AppConfig (loaded from .env).
+// Only fills fields that are not already set, so it never overwrites user progress.
+func (s *Service) seedWizardFromConfig() {
+	cfg := s.SnapshotConfig()
+	s.Wizard.Update(func(st *wizard.State) {
+		if cfg.SSHHost != "" && st.UDMHost == "" {
+			st.UDMHost = cfg.SSHHost
+		}
+		if cfg.SSHPort > 0 && st.UDMPort == 0 {
+			st.UDMPort = cfg.SSHPort
+		}
+		if cfg.SSHUser != "" && st.SSHUser == "" {
+			st.SSHUser = cfg.SSHUser
+		}
+		if cfg.SSHKeyPath != "" && st.SSHKeyPath == "" {
+			st.SSHKeyPath = cfg.SSHKeyPath
+		}
+		if cfg.SSHKnownHosts != "" && st.SSHKnownHosts == "" {
+			st.SSHKnownHosts = cfg.SSHKnownHosts
+		}
+		if cfg.CertEmail != "" && st.CertEmail == "" {
+			st.CertEmail = cfg.CertEmail
+		}
+		if cfg.CertHosts != "" && st.CertHosts == "" {
+			st.CertHosts = cfg.CertHosts
+		}
+		if cfg.DNSProvider != "" && st.DNSProvider == "" {
+			st.DNSProvider = cfg.DNSProvider
+		}
+	})
 }
 
 func (s *Service) SnapshotConfig() AppConfig {
@@ -206,10 +239,15 @@ func (s *Service) RunCheckCycle(ctx context.Context) {
 	}
 	dleft := int(time.Until(notAfter).Hours() / 24)
 	s.log.Info("Certificate CN=%q — %d day(s) until expiry.", cn, dleft)
+
+	installed, timerActive, _ := sshC.CheckUdmLeStatus(ctx)
+
 	_ = s.state.Update(func(st *RuntimeState) {
 		st.CommonName = cn
 		st.NotAfter = notAfter
 		st.LastError = ""
+		st.UdmLeInstalled = installed
+		st.UdmLeActive = timerActive
 	})
 
 	if cfg.UniFiActiveClientsPoll {
