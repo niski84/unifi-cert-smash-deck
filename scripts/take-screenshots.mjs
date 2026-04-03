@@ -226,12 +226,15 @@ for (const scene of SCENES) {
 
 await browser.close();
 
-// ── assemble GIF ─────────────────────────────────────────────────────────────
-console.log('\n🎞   Assembling demo.gif…');
+// ── assemble GIF via ffmpeg (reliable per-frame delay; ImageMagick loses delay
+//    when using grouped resize args) ──────────────────────────────────────────
+console.log('\n🎞   Assembling demo.gif via ffmpeg…');
 const gifPath = resolve(SHOTS_DIR, 'demo.gif');
-const resizedFrames = screenshots.flatMap(p => [`\\( "${p}" -resize 900x \\)`]);
+// 0.333 fps ≈ 3 s per frame
 execSync(
-  `convert ${resizedFrames.join(' ')} -delay 300 -loop 0 "${gifPath}"`,
+  `ffmpeg -y -framerate 0.333 -pattern_type glob -i '${SHOTS_DIR}/0*.png' ` +
+  `-vf "scale=900:-1:flags=lanczos,split[s0][s1];[s0]palettegen=128:stats_mode=single[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3" ` +
+  `-loop 0 "${gifPath}"`,
   { stdio: 'inherit', shell: '/bin/bash' }
 );
 console.log(`✓  ${gifPath}`);
