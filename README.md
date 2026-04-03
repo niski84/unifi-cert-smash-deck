@@ -4,9 +4,9 @@
 [![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/niski84/unifi-cert-smash-deck/pkgs/container/unifi-cert-smash-deck)
 [![Issues](https://img.shields.io/github/issues/niski84/unifi-cert-smash-deck)](https://github.com/niski84/unifi-cert-smash-deck/issues)
 
-**A local web dashboard that installs and manages Let's Encrypt certificates on your UniFi Dream Machine.**
+**Replace the browser security warning on your UniFi gateway — for good.**
 
-Certificate issuance and automatic 90-day renewal run on the UDM itself via **[kchristensen/udm-le](https://github.com/kchristensen/udm-le)**. This app handles setup — SSH key deployment, config generation, and one-click install — plus ongoing cert health monitoring so you always know how many days are left.
+A local web dashboard that walks you through installing a real Let's Encrypt certificate on your UniFi Dream Machine in five steps. After setup, certificates renew automatically every 90 days with zero manual work.
 
 > **Bugs, questions, or feature requests?** [Open an issue](https://github.com/niski84/unifi-cert-smash-deck/issues) — all feedback welcome.
 
@@ -14,26 +14,27 @@ Certificate issuance and automatic 90-day renewal run on the UDM itself via **[k
 
 ---
 
-## What it does
+## What you get
 
-- **Guided wizard** — 5-step setup: SSH connect → domain config → preflight → install → verify. Run once; certs renew automatically.
-- **Cert health dashboard** — status ring shows days remaining, last check time, common name, and error state. Auto-refreshes every 12 s.
-- **One-click install** — SSHes into the UDM, downloads udm-le, appends your config, and deploys an SSH key for future cert reads. No terminal copy/paste needed.
-- **Health API** — `/api/health` returns cert status as JSON, including `cert_days_left`, `cert_expires`, `cert_healthy`, and `cert_common_name`.
-- **Generated `udm-le.env` snippet** — builds the correct environment fragment from your settings (email, hostnames, DNS provider).
-- **Optional Cloudflare token verify** — one-time DNS permission check; token is never saved to disk.
+- **5-step guided wizard** — Connect → Domain → Preflight → Install → Verify. Run once; done.
+- **Live cert dashboard** — status ring shows days remaining, last check time, and common name. Auto-refreshes every 12 s.
+- **Automatic renewal** — udm-le runs a systemd timer on the UDM itself. No cron jobs on your side.
+- **Health API** — `/api/health` returns cert status as JSON for monitoring or scripting.
+- **Pre-fills from `.env`** — SSH host, user, key path, Cloudflare token, and more are detected automatically so you're not re-typing things you already have.
+- **Secrets stay local** — your DNS token is written directly to the UDM over SSH. It is never saved to disk on this machine.
 
 ---
 
-## Prerequisites
+## What you need
 
-| Requirement | Notes |
-|-------------|-------|
-| **Go 1.23+** | `go build` |
-| **Node.js + npm** | Build the embedded Tailwind CSS |
-| **Domain name** | DNS managed by Cloudflare, Route53, DigitalOcean, DuckDNS, Azure, GCloud, or Linode |
-| **DNS API token** | "Edit zone DNS" permission — written to the UDM, never stored here |
-| **SSH access to UDM** | Settings → System → Advanced → SSH → Enable. User is `root`; password is the local SSH password shown there — not your Ubiquiti cloud login. |
+| | Requirement | Notes |
+|---|---|---|
+| 1 | **Domain name** | A domain you control — e.g. `unifi.example.com`. The UDM's LAN IP is fine to use; no port forwarding required. |
+| 2 | **DNS managed by a supported provider** | Cloudflare, Route53, DigitalOcean, DuckDNS, Azure, Google Cloud, or Linode. The cert is issued via DNS challenge — no HTTP required. |
+| 3 | **DNS API token** | An API token with permission to create TXT records on your domain. It is written to the UDM and never stored here. |
+| 4 | **SSH access to the UDM** | UniFi OS → Settings → System → Advanced → SSH → Enable. The user is `root`; the password is the local SSH password shown there (not your Ubiquiti cloud login). |
+
+That's it. The wizard collects everything else.
 
 ---
 
@@ -43,7 +44,7 @@ Certificate issuance and automatic 90-day renewal run on the UDM itself via **[k
 cd goprojects/unifi-cert-smash-deck
 npm install
 ./scripts/compile.sh
-cp .env.example .env   # edit PORT if needed (default 8105)
+cp .env.example .env   # set PORT, SSH details, and DNS token if you have them
 ./scripts/reload.sh
 ```
 
@@ -66,6 +67,18 @@ docker run -d \
 ```
 
 Settings are stored in the `/data` volume. Pass `.env` variables with `-e` flags or a `--env-file`. SSH keys mounted at `/home/nonroot/.ssh` are accessible as `/home/nonroot/.ssh/id_ed25519` — set `UNIFICERT_SSH_KEY` accordingly.
+
+---
+
+## The 5-step wizard
+
+| Step | What happens |
+|------|-------------|
+| **1 — Connect** | Enter your UDM's LAN IP and SSH password. The app generates an Ed25519 key pair and deploys it so future operations are passwordless. |
+| **2 — Domain** | Enter your Let's Encrypt email, hostname(s), and DNS provider. Paste in your DNS API token. |
+| **3 — Preflight** | Automatic checks: can we reach the UDM? Does the DNS token have the right permissions? Passes in seconds if everything looks good. |
+| **4 — Install** | One click — SSHes into the UDM, downloads udm-le, writes your config and DNS token directly on the gateway, and kicks off the first cert issuance. |
+| **5 — Verify** | Confirms the cert was issued and is readable. Cert info is synced to the dashboard. |
 
 ---
 
@@ -96,20 +109,6 @@ The status ring and health API update on every scheduler cycle (default every 12
 
 ---
 
-## Setup flow
-
-1. **Enable SSH** on the UDM: UniFi OS → Settings → System → Advanced → SSH → Enable. Note the local SSH password.
-2. Open the app — the wizard starts automatically.
-3. **Step 1 – Connect**: enter the UDM's LAN IP and SSH password. The app generates an Ed25519 key and deploys it so future operations are passwordless.
-4. **Step 2 – Domain**: enter your Let's Encrypt email and hostname(s) (`unifi.example.com`), select your DNS provider.
-5. **Step 3 – Preflight**: optionally verify your DNS API token has the right permissions before touching the UDM.
-6. **Step 4 – Install**: one click — the app SSHes in, downloads udm-le, appends the config, and writes your DNS token directly on the UDM. Token never leaves the gateway.
-7. **Step 5 – Verify**: triggers the first certificate issuance (`udm-le.sh initial`) and confirms the cert is readable.
-
-Full step-by-step walkthrough with SSH troubleshooting: **[docs/SETUP-UDM-LE.md](docs/SETUP-UDM-LE.md)**
-
----
-
 ## SSH setup (manual)
 
 If you prefer to handle SSH key deployment yourself rather than using the wizard:
@@ -118,7 +117,7 @@ If you prefer to handle SSH key deployment yourself rather than using the wizard
 # Copy your key to the UDM
 ssh-copy-id -o PreferredAuthentications=keyboard-interactive,password -i ~/.ssh/id_ed25519.pub root@UDM_IP
 
-# Create a dedicated known_hosts file (avoids conflicts with your main one)
+# Create a dedicated known_hosts file
 ssh-keyscan UDM_IP | grep -v '^#' > ~/.ssh/known_hosts_unifi
 ```
 
@@ -138,9 +137,28 @@ UNIFICERT_SSH_PASSWORD="your-ssh-password"  # temporary; prefer key auth
 UNIFICERT_CERT_EMAIL=you@example.com
 UNIFICERT_CERT_HOSTS=unifi.example.com
 UNIFICERT_DNS_PROVIDER=cloudflare
+CLOUDFLARE_DNS_API_TOKEN=your-token-here
 ```
 
-All settings can also be saved via the web UI (stored in `data/unificert-settings.json`). The binary also loads `../unifi-smash-deck/.env` before this project's `.env`, so `UNIFI_HOST`, `UNIFI_API_KEY`, and `UNIFI_SITE` can be shared with [UniFi Smash Deck](https://github.com/niski84/unifi-smash-deck).
+All settings can also be saved via the web UI (stored in `data/unificert-settings.json`). Values present in `.env` are pre-filled in the wizard automatically — masked for display but ready to use.
+
+The binary also loads `../unifi-smash-deck/.env` before this project's `.env`, so `UNIFI_HOST`, `UNIFI_API_KEY`, and `UNIFI_SITE` can be shared with [UniFi Smash Deck](https://github.com/niski84/unifi-smash-deck).
+
+---
+
+## Changing the poll interval
+
+**Cert check interval (hours)** in Settings controls how often the app reads the cert over SSH. Restart after changing it (`./scripts/reload.sh`).
+
+---
+
+## Security notes
+
+- **DNS token never stored here.** It is written directly to the UDM via SSH (`/data/udm-le/udm-le.env`). The optional Verify field is POST-only and cleared from memory immediately.
+- **SSH password never saved to disk.** It is used once to deploy your key, then discarded. Subsequent connections use key auth.
+- `data/` holds settings and runtime state — keep it out of untrusted backups.
+- UniFi OS upgrades can reset udm-le state. Check the [udm-le README](https://github.com/kchristensen/udm-le/blob/master/README.md) before firmware updates.
+- Prefer a **dedicated `known_hosts` file** via `ssh-keyscan` to avoid `knownhosts: key mismatch` errors.
 
 ---
 
@@ -153,21 +171,6 @@ All settings can also be saved via the web UI (stored in `data/unificert-setting
 - **Tailwind CSS 4** — dark-first, `web/styles/input.css` → embedded static
 
 See [docs/HTMX_ALPINE.md](docs/HTMX_ALPINE.md) for UI conventions.
-
----
-
-## Security notes
-
-- **DNS token never stored here.** The token is written directly to the UDM via SSH (`/data/udm-le/udm-le.env`). The optional Verify field is POST-only and cleared from memory immediately.
-- `data/` holds settings and runtime state — keep it out of untrusted backups.
-- UniFi OS upgrades can reset udm-le state. Check the [udm-le README](https://github.com/kchristensen/udm-le/blob/master/README.md) before firmware updates.
-- Prefer a **dedicated `known_hosts` file** via `ssh-keyscan` to avoid `knownhosts: key mismatch` errors.
-
----
-
-## Changing the poll interval
-
-**Cert check interval (hours)** in Settings controls how often the app reads the cert over SSH. Restart after changing it (`./scripts/reload.sh`).
 
 ---
 

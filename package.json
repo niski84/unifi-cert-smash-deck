@@ -3,6 +3,7 @@
   "private": true,
   "devDependencies": {
     "@tailwindcss/cli": "^4.0.14",
+    "playwright": "^1.59.1",
     "tailwindcss": "^4.0.14"
   },
   "scripts": {
